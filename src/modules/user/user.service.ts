@@ -16,7 +16,7 @@ export class UserService {
     if (existEmail) throw new CustomError("E-mail already registered");
 
     const cacheCount = JSON.parse(await redis.get("users")).length;
-    console.log(cacheCount);
+
     let countUser;
     if (cacheCount === 0) countUser = await this.countUser();
     else countUser = cacheCount;
@@ -55,11 +55,10 @@ export class UserService {
   }
 
   async list() {
-    const cache = await redis.get("users");
     const data = await prisma.user.findMany();
-
     cacheStale("users", data);
 
+    const cache = await redis.get("users");
     if (cache) return JSON.parse(cache);
 
     await redis.set("users", JSON.stringify(data));

@@ -14,10 +14,10 @@ export const cacheStale = async (table: string, data: any) => {
         // console.log('Cache is stale - refetching ...');
         await redis.set(`${table}`, JSON.stringify(data));
         await redis.set(`${table}:validation`, `true`, `EX`, 5);
-        await redis.del(`${table}:is-refetching`);
       } catch (error) {
-        await redis.del(`${table}:is-refetching`);
         throw new CustomError(`Failed to update cache`);
+      } finally {
+        await redis.del(`${table}:is-refetching`);
       }
     }
   }
