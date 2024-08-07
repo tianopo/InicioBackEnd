@@ -3,6 +3,6 @@
     "prettier --write"
   ],
   "src/**/*.+(js|json|ts|tsx)": [
-    "eslint -c .eslintrc-commit.json --fix"
+    "eslint --fix"
   ]
 }

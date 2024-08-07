@@ -20,7 +20,7 @@ export class UserService {
     let countUser;
     if (cacheCount === 0) countUser = await this.countUser();
     else countUser = cacheCount;
-    const firstRole = countUser === 0 ? Role.Admin : Role.User;
+    const firstRole = countUser === 0 ? Role.Master : Role.Admin;
     return prisma.user.create({
       data: {
         ...data,

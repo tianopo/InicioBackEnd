@@ -11,7 +11,7 @@
   "files.exclude": {
     "**/.git": true,
     "eslint.config.mjs": false,
-    ".lintstagedrc.json": true,
+    ".lintstagedrc.json": false,
     ".prettierrc": true,
     ".github": true,
     ".tool-versions": true,
