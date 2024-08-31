@@ -88,6 +88,20 @@ export class SendEmailService {
       }))
       .filter(({ cpf }) => cpf && cpf.trim() !== "");
 
+    if (allCpfs.length > 0) {
+      const cpfList = allCpfs.map(({ cpf }) => cpf);
+      const registeredCpfs = await this.buyerService.findByCpf(cpfList);
+      const unregisteredCpfs = allCpfs.filter(({ cpf }) => !registeredCpfs.includes(cpf));
+
+      if (unregisteredCpfs.length > 0) {
+        try {
+          await this.buyerService.registerBuyers(unregisteredCpfs);
+        } catch (error) {
+          throw new CustomError(`Erro ao cadastrar CPF(s)/CNPJ(s): ${error.message}`);
+        }
+      }
+    }
+
     /* Validação de cadastro do Vendedor */
     const allBuyCounterparties = compras.map((compra) => compra.apelidoVendedor);
     const allBuyExchanges = compras.map((compra) => compra.exchangeUtilizada);
@@ -102,19 +116,9 @@ export class SendEmailService {
     );
 
     if (unregisteredCounterpartyBuyer.length > 0) {
-      if (allCpfs.length > 0) {
-        const cpfList = allCpfs.map(({ cpf }) => cpf);
-        const registeredCpfs = await this.buyerService.findByCpf(cpfList);
-        const unregisteredCpfs = allCpfs.filter(({ cpf }) => !registeredCpfs.includes(cpf));
-
-        if (unregisteredCpfs.length > 0) {
-          try {
-            await this.buyerService.registerBuyers(unregisteredCpfs);
-          } catch (error) {
-            throw new CustomError(`Erro ao cadastrar CPF(s)/CNPJ(s): ${error.message}`);
-          }
-        }
-      }
+      throw new CustomError(
+        `Preencha CPF e nome, compradores não cadastrados: ${unregisteredCounterpartyBuyer.join(", ")}`,
+      );
     }
 
     /* Validação e registro de novos vendedores */
@@ -142,9 +146,32 @@ export class SendEmailService {
       }
     }
 
-    throw new CustomError(`passou`);
     /* Envio de E-mail */
-    const emailBody = transactionsTemplate(vendas, compras);
+    const compradoresMapeados = await this.buyerService.findByCounterparty(allSellCounterparties);
+    const vendedoresMapeados = await this.sellerService.findByCounterparty(allBuyCounterparties);
+
+    const vendasComNome = vendas.map((venda) => {
+      const comprador = compradoresMapeados.find(
+        (buyer) => buyer.counterparty === venda.apelidoComprador,
+      );
+      return {
+        ...venda,
+        nomeComprador: comprador ? comprador.name : venda.nomeComprador,
+        cpfComprador: comprador ? comprador.document : venda.cpfComprador,
+      };
+    });
+
+    const comprasComNome = compras.map((compra) => {
+      const vendedor = vendedoresMapeados.find(
+        (seller) => seller.counterparty === compra.apelidoVendedor,
+      );
+      return {
+        ...compra,
+        nomeVendedor: vendedor ? vendedor.name : compra.nomeVendedor,
+      };
+    });
+
+    const emailBody = transactionsTemplate(vendasComNome, comprasComNome);
     const subject = "Resumo das Transações Diárias";
     try {
       await this.delay(2000);

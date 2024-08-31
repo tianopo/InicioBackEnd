@@ -42,17 +42,36 @@ export class BuyerService {
   async registerBuyers(
     buyerData: { cpf: string; nome: string; apelido: string; exchange: string }[],
   ) {
-    for (const { cpf, nome, apelido, exchange } of buyerData) {
-      if (nome.length === 0) throw new CustomError(`${apelido} e ${cpf} não tem nome`);
-      await prisma.buyer.create({
-        data: {
-          document: cpf,
-          name: nome,
-          counterparty: apelido,
-          exchange: exchange,
+    await prisma.$transaction(async (prismaTransaction) => {
+      for (const { cpf, nome, apelido, exchange } of buyerData) {
+        if (nome.length === 0) throw new CustomError(`${apelido} e ${cpf} não tem nome`);
+        await prismaTransaction.buyer.create({
+          data: {
+            document: cpf,
+            name: nome,
+            counterparty: apelido,
+            exchange: exchange,
+          },
+        });
+        console.log(`${nome} cadastrado com sucesso`);
+      }
+    });
+  }
+
+  async findByCounterparty(counterparties: string[]) {
+    const buyers = await prisma.buyer.findMany({
+      where: {
+        counterparty: {
+          in: counterparties,
         },
-      });
-      console.log(`${nome} cadastrado com sucesso`);
-    }
+      },
+      select: {
+        name: true,
+        document: true,
+        counterparty: true,
+      },
+    });
+
+    return buyers;
   }
 }
