@@ -4,8 +4,8 @@ import { TokenService } from "../token/token.service";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { GetMembershipDto } from "./dto/get-membership.dto";
 import { MembershipDto } from "./dto/membership.dto";
-import { MultaDto } from "./dto/multaDto";
 import { SendEmailService } from "./send-email.service";
+import { TransactionsDto } from "./dto/transactions.dto";
 
 @Controller("send")
 export class SendEmailController {
@@ -28,11 +28,6 @@ export class SendEmailController {
     return this.sendEmailService.sendMembership(data);
   }
 
-  @Post("multa")
-  sendMulta(@Body() data: MultaDto) {
-    return this.sendEmailService.sendMulta(data);
-  }
-
   @Get(":token")
   async validateToken(@Param("token") token: string) {
     try {
@@ -41,5 +36,10 @@ export class SendEmailController {
     } catch (error) {
       throw new CustomError("Página não é válida");
     }
+  }
+
+  @Post("transactions")
+  sendTransactions(@Body() data: TransactionsDto) {
+    return this.sendEmailService.sendTransactions(data);
   }
 }

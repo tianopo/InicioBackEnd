@@ -1,13 +1,13 @@
 import { IsNotEmpty, IsString, Length } from "class-validator";
-import { Role } from "../../decorators/roles.decorator";
+import { Role } from "../../../decorators/roles.decorator";
 import {
   EmailFormat,
   GetOneLowercase,
   GetOneNumber,
   GetOneSpecialCharacter,
   GetOneUppercase,
-} from "../../decorators/validators/regex.decorator";
-import { Required } from "../required.dto";
+} from "../../../decorators/validators/regex.decorator";
+import { Required } from "../../required.dto";
 
 export class UserEntity extends Required {
   @IsNotEmpty()

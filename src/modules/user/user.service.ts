@@ -5,7 +5,7 @@ import { redis } from "../../config/redis";
 import { Role } from "../../decorators/roles.decorator";
 import { CustomError } from "../../err/custom/Error.filter";
 import { cacheStale } from "../../utils/cacheStale";
-import { UserEntity } from "./user.dto";
+import { UserEntity } from "./dto/user.dto";
 
 @Injectable()
 export class UserService {

@@ -22,6 +22,8 @@ export const PhoneFormat = () =>
 export const CellphoneFormat = () =>
   createRegexDecorator(RegexExp.cellphone_mask, "Formato de celular inválido");
 export const CEPFormat = () => createRegexDecorator(RegexExp.cep_mask, "Formato de CEP inválido");
+export const CNPJCPFFormat = () =>
+  createRegexDecorator(RegexExp.cpfOrCnpjMask, "Formato de CPF/CNPJ inválido");
 export const CPFFormat = () => createRegexDecorator(RegexExp.cpf_mask, "Formato de CPF inválido");
 export const CNPJFormat = () =>
   createRegexDecorator(RegexExp.cnpj_mask, "Formato de CNPJ inválido");

@@ -1,15 +1,17 @@
-import { IsNotEmpty, IsString } from "class-validator";
-import { CPFFormat } from "../../../decorators/validators/regex.decorator";
+import { IsNotEmpty, IsString, ValidateIf } from "class-validator";
+import { CNPJCPFFormat } from "../../../decorators/validators/regex.decorator";
 
 export class VendaDto {
-  @IsString()
-  @IsNotEmpty()
   nomeComprador: string;
 
   @IsString()
   @IsNotEmpty()
-  @CPFFormat()
-  cpfComprador: string;
+  apelidoComprador: string;
+
+  @IsString()
+  @ValidateIf((o) => o.cpfComprador !== "")
+  @CNPJCPFFormat()
+  cpfComprador?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -17,7 +19,7 @@ export class VendaDto {
 
   @IsString()
   @IsNotEmpty()
-  horaTransacao: string;
+  dataHoraTransacao: string;
 
   @IsString()
   @IsNotEmpty()

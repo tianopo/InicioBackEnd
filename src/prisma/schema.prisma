@@ -20,3 +20,28 @@ model User {
 
   @@map("user")
 }
+
+model Buyer {
+  id        String   @id @unique @default(uuid())
+  createdIn DateTime @default(now())
+  updated   DateTime @default(now()) @updatedAt
+
+  name         String
+  counterparty String
+  exchange     String
+  document     String @unique
+
+  @@map("buyer")
+}
+
+model Seller {
+  id        String   @id @unique @default(uuid())
+  createdIn DateTime @default(now())
+  updated   DateTime @default(now()) @updatedAt
+
+  name         String
+  counterparty String
+  exchange     String
+
+  @@map("seller")
+}

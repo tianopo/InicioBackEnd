@@ -1,24 +1,26 @@
 import { Injectable } from "@nestjs/common";
 import { prisma } from "../../config/prisma-connection";
 import { CustomError } from "../../err/custom/Error.filter";
-import { generatePDFMulta } from "../../utils/email/generatePdfMulta";
 import { sendEmail } from "../../utils/email/nodemailer";
 import { getMembershipTemplate } from "../../utils/email/template/get-membership";
-import { multaTemplate } from "../../utils/email/template/multa-template";
 import { recoverTemplate } from "../../utils/email/template/recover-template";
 import { termsTemplate } from "../../utils/email/template/terms-template";
 import { transactionsTemplate } from "../../utils/email/template/transactions-template";
+import { BuyerService } from "../buyer/buyer.service";
+import { SellerService } from "../seller/seller.service";
 import { TokenService } from "../token/token.service";
-import { CompraDto } from "./dto/compraDto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { GetMembershipDto } from "./dto/get-membership.dto";
 import { MembershipDto } from "./dto/membership.dto";
-import { MultaDto } from "./dto/multaDto";
-import { VendaDto } from "./dto/vendaDto";
+import { TransactionsDto } from "./dto/transactions.dto";
 
 @Injectable()
 export class SendEmailService {
-  constructor(private readonly tokenService: TokenService) {}
+  constructor(
+    private readonly tokenService: TokenService,
+    private readonly buyerService: BuyerService,
+    private readonly sellerService: SellerService,
+  ) {}
 
   delay(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -69,23 +71,79 @@ export class SendEmailService {
     return true;
   }
 
-  async sendMulta(data: MultaDto) {
-    const emailBodyClient = multaTemplate(data);
-    try {
-      await this.delay(2000);
-      console.log(1);
-      const pdfBuffer = generatePDFMulta(data);
-      console.log(2);
-      await sendEmail("NOTIFICAÇÃO DE DESCONTO DE MULTA", emailBodyClient, data.email, pdfBuffer);
-      console.log(3);
-    } catch (err) {
-      throw new CustomError("Erro no envio de e-mail: " + err);
+  async sendTransactions(data: TransactionsDto) {
+    const { vendas, compras } = data;
+    if (!Array.isArray(vendas) || !Array.isArray(compras)) {
+      throw new CustomError("Vendas e Compras devem ser arrays");
+    }
+    /* Validação de cadastro do Comprador */
+    const allSellCounterparties = vendas.map((venda) => venda.apelidoComprador);
+    const allSellExchanges = vendas.map((venda) => venda.exchangeUtilizada);
+    const allCpfs = vendas
+      .map((venda) => ({
+        cpf: venda.cpfComprador,
+        nome: venda.nomeComprador,
+        apelido: venda.apelidoComprador,
+        exchange: venda.exchangeUtilizada,
+      }))
+      .filter(({ cpf }) => cpf && cpf.trim() !== "");
+
+    /* Validação de cadastro do Vendedor */
+    const allBuyCounterparties = compras.map((compra) => compra.apelidoVendedor);
+    const allBuyExchanges = compras.map((compra) => compra.exchangeUtilizada);
+
+    const buyers = await this.buyerService.findByCounterpartyAndExchange(
+      allSellCounterparties,
+      allSellExchanges,
+    );
+    const registeredCounterpartyBuyer = buyers.map((buyer) => buyer.counterparty);
+    const unregisteredCounterpartyBuyer = allSellCounterparties.filter(
+      (counterparty) => !registeredCounterpartyBuyer.includes(counterparty),
+    );
+
+    if (unregisteredCounterpartyBuyer.length > 0) {
+      if (allCpfs.length > 0) {
+        const cpfList = allCpfs.map(({ cpf }) => cpf);
+        const registeredCpfs = await this.buyerService.findByCpf(cpfList);
+        const unregisteredCpfs = allCpfs.filter(({ cpf }) => !registeredCpfs.includes(cpf));
+
+        if (unregisteredCpfs.length > 0) {
+          try {
+            await this.buyerService.registerBuyers(unregisteredCpfs);
+          } catch (error) {
+            throw new CustomError(`Erro ao cadastrar CPF(s)/CNPJ(s): ${error.message}`);
+          }
+        }
+      }
     }
 
-    return true;
-  }
+    /* Validação e registro de novos vendedores */
+    const sellers = await this.sellerService.findByCounterpartyAndExchange(
+      allBuyCounterparties,
+      allBuyExchanges,
+    );
+    const registeredCounterpartySeller = sellers.map((seller) => seller.counterparty);
+    const unregisteredCounterpartySeller = allBuyCounterparties
+      .filter((counterparty) => !registeredCounterpartySeller.includes(counterparty))
+      .map((counterparty) => {
+        const compra = compras.find((compra) => compra.apelidoVendedor === counterparty);
+        return {
+          nome: compra?.nomeVendedor ?? "",
+          apelido: counterparty,
+          exchange: compra?.exchangeUtilizada ?? "",
+        };
+      });
 
-  async sendTransaction(vendas: VendaDto[], compras: CompraDto[]) {
+    if (unregisteredCounterpartySeller.length > 0) {
+      try {
+        await this.sellerService.registerSellers(unregisteredCounterpartySeller);
+      } catch (error) {
+        throw new CustomError(`Erro ao cadastrar vendedor: ${error.message}`);
+      }
+    }
+
+    throw new CustomError(`passou`);
+    /* Envio de E-mail */
     const emailBody = transactionsTemplate(vendas, compras);
     const subject = "Resumo das Transações Diárias";
     try {

@@ -9,7 +9,6 @@ const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> =
     service: "outlook",
     host: process.env.NODEMAILER_HOST,
     port: parseInt(process.env.NODEMAILER_PORT, 10),
-    secure: process.env.NODEMAILER_SECURE === "true",
     tls: {
       rejectUnauthorized: true,
     },

@@ -1,9 +1,11 @@
 import { IsNotEmpty, IsString } from "class-validator";
 
 export class CompraDto {
+  nomeVendedor: string;
+
   @IsString()
   @IsNotEmpty()
-  nomeVendedor: string;
+  apelidoVendedor: string;
 
   @IsString()
   @IsNotEmpty()
@@ -11,7 +13,7 @@ export class CompraDto {
 
   @IsString()
   @IsNotEmpty()
-  horaTransacao: string;
+  dataHoraTransacao: string;
 
   @IsString()
   @IsNotEmpty()
