@@ -4,7 +4,7 @@ import { VendaDto } from "../../../modules/send-email/dto/venda.dto";
 const formatTransacao = (transacao: VendaDto | CompraDto, tipo: "venda" | "compra") => `
 <li><strong>Nome ${tipo === "venda" ? "do Comprador" : "do Vendedor"}:</strong> ${tipo === "venda" ? (transacao as VendaDto).nomeComprador : (transacao as CompraDto).nomeVendedor}</li>
   <li><strong>Apelido ${tipo === "venda" ? "do Comprador" : "do Vendedor"}:</strong> ${tipo === "venda" ? (transacao as VendaDto).apelidoComprador : (transacao as CompraDto).apelidoVendedor}</li>
-  <li>${tipo === "venda" ? `<strong>CPF do Comprador:</strong> ${(transacao as VendaDto).cpfComprador}` : ""}</li>
+  <li>${tipo === "venda" ? `<strong>CPF/CNPJ do Comprador:</strong> ${(transacao as VendaDto).cpfComprador}` : ""}</li>
   <li><strong>Número da Ordem:</strong> ${transacao.numeroOrdem}</li>
   <li><strong>Data e Hora da Transação:</strong> ${transacao.dataHoraTransacao}</li>
   <li><strong>Exchange Utilizada:</strong> ${transacao.exchangeUtilizada.split(" ")[0]}</li>
@@ -35,9 +35,9 @@ export const transactionsTemplate = (vendas: VendaDto[], compras: CompraDto[]): 
   const mes = hoje.getMonth() + 1;
   const ano = hoje.getFullYear();
 
-  const ontem = new Date(ano, mes - 1, dia - 1);
+  const hojeAtual = new Date(ano, mes - 1, dia);
 
-  const dataOntem = ontem.toLocaleDateString("pt-BR", {
+  const dataHojeAtual = hojeAtual.toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -122,7 +122,7 @@ export const transactionsTemplate = (vendas: VendaDto[], compras: CompraDto[]): 
       <body>
         <div class="container">
           <img src="./cryptotech.png" alt="Logo" class="logo">
-          <h1>Data das Transações: ${dataOntem}</h1>
+          <h1>Apuração de Transações na Data de ${dataHojeAtual}</h1>
           <h2>Resumo das Transações</h2>
           <div class="details">
             <ul>

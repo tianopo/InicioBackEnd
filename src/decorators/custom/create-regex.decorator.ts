@@ -10,6 +10,9 @@ export const CustomCreateRegex = (regex: RegExp, validationOptions?: ValidationO
       options: validationOptions,
       validator: {
         validate(value: value, _: ValidationArguments) {
+          if (!value) {
+            return true;
+          }
           return regex.test(value);
         },
       },
