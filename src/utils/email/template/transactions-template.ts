@@ -128,7 +128,7 @@ export const transactionsTemplate = (vendas: VendaDto[], compras: CompraDto[]): 
             <ul>
               <li><strong>Total de Vendas:</strong> ${vendas.length}</li>
               <li><strong>Total de Compras:</strong> ${compras.length}</li>
-              <li><strong>Lucro total do dia:</strong> R$ ${lucroTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</li>
+              <li><strong>Lucro total da apuração:</strong> R$ ${lucroTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</li>
             </ul>
           </div>
           <h2>Detalhamento das Transações de Venda</h2>
