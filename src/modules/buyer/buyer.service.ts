@@ -83,4 +83,16 @@ export class BuyerService {
     });
     return !!buyer;
   }
+
+  async checkNameExists(nome: string, exchange: string): Promise<boolean> {
+    const buyer = await prisma.buyer.findFirst({
+      where: {
+        AND: {
+          name: nome,
+          exchange,
+        },
+      },
+    });
+    return !!buyer;
+  }
 }
