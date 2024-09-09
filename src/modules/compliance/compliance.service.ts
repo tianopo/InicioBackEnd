@@ -16,48 +16,81 @@ export class ComplianceService {
     const { cpf, cnpj } = data;
     const cpfClean = cpf.replace(/\D/g, "");
     const cnpjClean = cnpj ? cnpj.replace(/\D/g, "") : "";
+
+    const portalDaTransparenciaUrl = "https://api.portaldatransparencia.gov.br/api-de-dados/";
+    const msgErr = (m: string) => `falha ao validar ${m}`;
+
     const apiKeySwagger = "17326962a1b9461a5cf39e98e21734d0";
     const apiKeyInfoSimples = "nR1TnskfynTogH1BFR2oqZPZ4kAv4uAeIrprFbFm";
-    const apiKeySintegraws = "6E66BA3F-60A4-43C8-BCA0-D2540BAB34C4";
     // https://api.portaldatransparencia.gov.br/swagger-ui/index.html#/
     const results: any = {};
-    try {
-      const registerResponse = await axios.post(
-        `https://www.sintegraws.com.br/api/v1/execute-api.php?token=${apiKeySintegraws}&cpf=33862444830&data-nascimento=1998-08-19&plugin=CPF`,
-      );
-      results.cadastro = registerResponse.data.data;
-    } catch (error) {
-      results.cadastro = "falha ao validar o CPF.";
-    }
 
-    try {
-      const pepResponse = await axios.get(
-        `https://api.portaldatransparencia.gov.br/api-de-dados/peps?cpf=${cpfClean}&pagina=1`,
-        {
-          headers: {
-            "chave-api-dados": apiKeySwagger,
-          },
-        },
-      );
-      results.pep = pepResponse.data.length ? pepResponse.data[0] : "";
-    } catch (error) {
-      results.pepError = "falha ao validar o PEP.";
-    }
     const cpfExists = await this.buyerService.checkCpfExists(cpf);
     if (cpfExists) results.ourData = "O CPF já foi cadastrado";
     else results.ourData = "CPF não cadastrado, cadastre um novo comprador.";
+
+    const fetchDataPortal = async (url: string, errorMsg: string) => {
+      try {
+        const response = await axios.get(`${portalDaTransparenciaUrl}${url}`, {
+          headers: { "chave-api-dados": apiKeySwagger },
+        });
+        return response.data.length ? response.data[0] : "";
+      } catch (error) {
+        return errorMsg;
+      }
+    };
+    const pepRsp = await fetchDataPortal(
+      `peps?cpf=${cpfClean}&pagina=1`,
+      msgErr("Pessoa Politicamente Exposta"),
+    );
+    results.pep = pepRsp;
+
+    const sdcRsp = await fetchDataPortal(
+      `seguro-defeso-codigo?codigo=${cpfClean}&pagina=1`,
+      msgErr("Seguro Defeso"),
+    );
+    results.sdc = sdcRsp;
+
+    const safraRsp = await fetchDataPortal(
+      `safra-codigo-por-cpf-ou-nis?codigo=${cpfClean}&pagina=1`,
+      msgErr("Garantia Safra"),
+    );
+    results.safra = safraRsp;
+
+    const petiRsp = await fetchDataPortal(
+      `peti-por-cpf-ou-nis?codigo=${cpfClean}&pagina=1`,
+      msgErr("Programa de Erradicação do Trabalho Infantil"),
+    );
+    results.peti = petiRsp;
+
+    const bpcRsp = await fetchDataPortal(
+      `bpc-por-cpf-ou-nis?codigo=${cpfClean}&pagina=1`,
+      msgErr("Benefício de Prestação Continuada"),
+    );
+    results.bpc = bpcRsp;
+
+    const aeRsp = await fetchDataPortal(
+      `auxilio-emergencial-por-cpf-ou-nis?codigoBeneficiario=${cpfClean}&codigoResponsavelFamiliar=${cpfClean}&pagina=1`,
+      msgErr("Auxílio Emergencial"),
+    );
+    results.ae = aeRsp;
+
+    const cnepRsp = await fetchDataPortal(
+      `cnep?codigoSancionado=${cnpj ? cnpjClean : cpfClean}&pagina=1`,
+      msgErr("Auxílio Emergencial"),
+    );
+    results.cnep = cnepRsp;
+
     if (cnpj) {
       try {
-        console.log("cnpj", cnpjClean);
+        // 3 requisições por minuto
         const cnpjResponse = await axios.get(`https://receitaws.com.br/v1/cnpj/${cnpjClean}`);
         results.cnpj = cnpjResponse.data;
       } catch (error) {
-        results.cnpjError = "Failed to validate CNPJ.";
+        results.cnpj = "Falha ao validar CNPJ.";
       }
     }
 
-    console.log(results, "oi");
-    console.log(data);
     return results;
   }
 

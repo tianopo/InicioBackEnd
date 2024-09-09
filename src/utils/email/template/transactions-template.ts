@@ -159,10 +159,9 @@ export const transactionsTemplate = (vendas: VendaDto[], compras: CompraDto[]): 
           </div>
           <div class="policy">
             <h2>Política de Pagamento</h2>
-            <p><strong>Comprovação de Identidade:</strong> Não aceito pagamentos sem CPF, mas a pessoa pode se negar a passar por questão de segurança da plataforma se a pessoa já for verificada. Eles são concordados em serem verificados e validados nesses seguintes sites:</p>
+            <p><strong>Comprovação de Identidade:</strong> Não aceito pagamentos sem CPF, mas a pessoa pode se negar a passar por questão de segurança da plataforma se a pessoa já for verificada. Eles são concordados em serem verificados e validados nestas seguintes apis e sites:</p>
             <ul>
-              <li><a href="https://portaldatransparencia.gov.br/pessoa-fisica/busca/lista?pagina=1&tamanhoPagina=10">Portal da Transparência: https://portaldatransparencia.gov.br/pessoa-fisica/busca/lista?pagina=1&tamanhoPagina=10</a></li>
-              <li><a href="https://www.situacao-cadastral.com/">Situação Cadastral: https://www.situacao-cadastral.com/</a></li>
+              <li><a href="https://api.portaldatransparencia.gov.br/swagger-ui/index.html#/">Algumas API's como PEP, BPC, CNEP, PETI, Safra, SDC e outros auxilios: https://api.portaldatransparencia.gov.br/swagger-ui/index.html#/</a></li>
               <li><a href="https://buscaprime.com.br/buscar-dados-pelo-cpf/consulta.php">Consulta CPF: https://buscaprime.com.br/buscar-dados-pelo-cpf/consulta.php</a></li>
               <li><a href="https://totalconsulta.com/">Consulta CPF: https://totalconsulta.com/</a></li>
               <li><a href="https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublica.asp">Receita Federal: https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublica.asp</a></li>
