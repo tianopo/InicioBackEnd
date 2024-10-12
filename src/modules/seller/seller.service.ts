@@ -49,6 +49,7 @@ export class SellerService {
         },
       },
       select: {
+        id: true,
         name: true,
         counterparty: true,
       },

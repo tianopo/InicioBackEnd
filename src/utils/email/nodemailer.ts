@@ -6,9 +6,10 @@ import { CustomError } from "../../err/custom/Error.filter";
 
 const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> =
   nodemailer.createTransport({
-    service: "outlook",
+    service: "gmail",
     host: process.env.NODEMAILER_HOST,
     port: parseInt(process.env.NODEMAILER_PORT, 10),
+    secure: process.env.NODEMAILER_SECURE === "true",
     tls: {
       rejectUnauthorized: true,
     },

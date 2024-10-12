@@ -1,5 +1,5 @@
-import { CompraDto } from "../../../modules/send-email/dto/compra.dto";
-import { VendaDto } from "../../../modules/send-email/dto/venda.dto";
+import { CompraDto } from "../../../modules/transactions/dto/compra.dto";
+import { VendaDto } from "../../../modules/transactions/dto/venda.dto";
 
 const formatTransacao = (transacao: VendaDto | CompraDto, tipo: "venda" | "compra") => `
 <li><strong>Nome ${tipo === "venda" ? "do Comprador" : "do Vendedor"}:</strong> ${tipo === "venda" ? (transacao as VendaDto).nomeComprador : (transacao as CompraDto).nomeVendedor}</li>
@@ -182,7 +182,6 @@ export const transactionsTemplate = (vendas: VendaDto[], compras: CompraDto[]): 
               <li><a href="https://www.bybit.com/pt-BR/help-center/?language=pt_BR">Bybit - Suporte: https://www.bybit.com/pt-BR/help-center/?language=pt_BR</a></li>
               <li><a href="https://www.binance.com/pt-BR/chat">Binance - Suporte: https://www.binance.com/pt-BR/chat</a></li>
               <li><a href="https://www.kucoin.com/support">KuCoin - Suporte: https://www.kucoin.com/support</a></li>
-              <li><a href="https://www.gate.io/pt/help">Gate.io - Suporte: https://www.gate.io/pt/help</a></li>
             </ul>
           </div>
           <div class="footer">

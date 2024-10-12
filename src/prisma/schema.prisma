@@ -29,7 +29,8 @@ model Buyer {
   name         String
   counterparty String
   exchange     String
-  document     String @unique
+  document     String  @unique
+  Order        Order[]
 
   @@map("buyer")
 }
@@ -42,6 +43,31 @@ model Seller {
   name         String
   counterparty String
   exchange     String
+  Order        Order[]
 
   @@map("seller")
+}
+
+model Order {
+  id        String   @id @unique @default(uuid())
+  createdIn DateTime @default(now())
+  updated   DateTime @default(now()) @updatedAt
+
+  numeroOrdem   String @unique
+  dataTransacao String
+  exchange      String
+  ativoDigital  String
+  quantidade    String
+  valor         String
+  valorToken    String
+  taxaTransacao String
+  tipo          String // 'compra' ou 'venda'
+
+  buyerId String? // Nullable para vendas
+  buyer   Buyer?  @relation(fields: [buyerId], references: [id])
+
+  sellerId String? // Nullable para compras
+  seller   Seller? @relation(fields: [sellerId], references: [id])
+
+  @@map("order")
 }

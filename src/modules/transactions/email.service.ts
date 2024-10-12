@@ -5,7 +5,6 @@ import { sendEmail } from "../../utils/email/nodemailer";
 import { getMembershipTemplate } from "../../utils/email/template/get-membership";
 import { recoverTemplate } from "../../utils/email/template/recover-template";
 import { termsTemplate } from "../../utils/email/template/terms-template";
-import { transactionsTemplate } from "../../utils/email/template/transactions-template";
 import { BuyerService } from "../buyer/buyer.service";
 import { SellerService } from "../seller/seller.service";
 import { TokenService } from "../token/token.service";
@@ -15,7 +14,7 @@ import { MembershipDto } from "./dto/membership.dto";
 import { TransactionsDto } from "./dto/transactions.dto";
 
 @Injectable()
-export class SendEmailService {
+export class EmailService {
   constructor(
     private readonly tokenService: TokenService,
     private readonly buyerService: BuyerService,
@@ -146,7 +145,7 @@ export class SendEmailService {
       }
     }
 
-    /* Envio de E-mail */
+    /* Envio de dados para TXT */
     const compradoresMapeados = await this.buyerService.findByCounterparty(allSellCounterparties);
     const vendedoresMapeados = await this.sellerService.findByCounterparty(allBuyCounterparties);
 
@@ -156,6 +155,7 @@ export class SendEmailService {
       );
       return {
         ...venda,
+        id: comprador ? comprador.id : null,
         nomeComprador: comprador ? comprador.name : venda.nomeComprador,
         cpfComprador: comprador ? comprador.document : venda.cpfComprador,
       };
@@ -167,19 +167,87 @@ export class SendEmailService {
       );
       return {
         ...compra,
+        id: vendedor ? vendedor.id : null,
         nomeVendedor: vendedor ? vendedor.name : compra.nomeVendedor,
       };
     });
 
-    const emailBody = transactionsTemplate(vendasComNome, comprasComNome);
-    const subject = "Resumo das Transações Diárias";
-    try {
-      await this.delay(2000);
-      sendEmail(subject, emailBody, "matheuslink19@hotmail.com");
-    } catch (err) {
-      throw new CustomError("Erro ao enviar e-mail: " + err);
-    }
+    // Registro das ordens de compra e venda no banco de dados
+    await prisma.$transaction(async (prisma) => {
+      for (const venda of vendasComNome) {
+        await prisma.order.create({
+          data: {
+            createdIn: new Date(venda.dataHoraTransacao),
+            numeroOrdem: venda.numeroOrdem,
+            dataTransacao: venda.dataHoraTransacao,
+            exchange: venda.exchangeUtilizada,
+            ativoDigital: venda.ativoDigital,
+            quantidade: venda.quantidadeVendida,
+            valor: venda.valorVenda,
+            valorToken: venda.valorTokenDataVenda,
+            taxaTransacao: venda.taxaTransacao,
+            tipo: "venda",
+            buyer: {
+              connect: { id: venda.id },
+            },
+          },
+        });
+      }
 
+      for (const compra of comprasComNome) {
+        await prisma.order.create({
+          data: {
+            createdIn: new Date(compra.dataHoraTransacao),
+            numeroOrdem: compra.numeroOrdem,
+            dataTransacao: compra.dataHoraTransacao,
+            exchange: compra.exchangeUtilizada,
+            ativoDigital: compra.ativoDigital,
+            quantidade: compra.quantidadeComprada,
+            valor: compra.valorCompra,
+            valorToken: compra.valorTokenDataCompra,
+            taxaTransacao: compra.taxaTransacao,
+            tipo: "compra",
+            seller: {
+              connect: { id: compra.id },
+            },
+          },
+        });
+      }
+    });
+    // const emailBody = transactionsTemplate(vendasComNome, comprasComNome);
+    // const subject = "Resumo das Transações Diárias";
+    // try {
+    //   await this.delay(2000);
+    //   sendEmail(subject, emailBody, "matheuslink19@hotmail.com");
+    // } catch (err) {
+    //   throw new CustomError("Erro ao enviar e-mail: " + err);
+    // }
     return true;
+  }
+
+  async listTransactions(startDate: string, endDate: string) {
+    console.log(startDate, endDate, "date");
+    if (!startDate || !endDate)
+      throw new CustomError("Por favor, forneça ambas as datas de início e fim.");
+
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T23:59:59`);
+
+    // Busca no banco de dados as transações entre essas datas
+    const transactions = await prisma.order.findMany({
+      where: {
+        createdIn: {
+          gte: start,
+          lte: end,
+        },
+      },
+      include: {
+        buyer: true,
+        seller: true,
+      },
+    });
+    console.log(transactions);
+
+    return transactions;
   }
 }

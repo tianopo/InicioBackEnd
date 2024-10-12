@@ -66,6 +66,7 @@ export class BuyerService {
         },
       },
       select: {
+        id: true,
         name: true,
         document: true,
         counterparty: true,
