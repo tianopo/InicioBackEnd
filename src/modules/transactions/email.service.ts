@@ -78,23 +78,25 @@ export class EmailService {
     /* Validação de cadastro do Comprador */
     const allSellCounterparties = vendas.map((venda) => venda.apelidoComprador);
     const allSellExchanges = vendas.map((venda) => venda.exchangeUtilizada);
-    const allCpfs = vendas
+    const allDocumentos = vendas
       .map((venda) => ({
-        cpf: venda.documentoComprador,
+        documento: venda.documentoComprador,
         nome: venda.nomeComprador,
         apelido: venda.apelidoComprador,
         exchange: venda.exchangeUtilizada,
       }))
-      .filter(({ cpf }) => cpf && cpf.trim() !== "");
+      .filter(({ documento }) => documento && documento.trim() !== "");
 
-    if (allCpfs.length > 0) {
-      const cpfList = allCpfs.map(({ cpf }) => cpf);
-      const registeredCpfs = await this.buyerService.findByCpf(cpfList);
-      const unregisteredCpfs = allCpfs.filter(({ cpf }) => !registeredCpfs.includes(cpf));
+    if (allDocumentos.length > 0) {
+      const documentoList = allDocumentos.map(({ documento }) => documento);
+      const registeredDocumentos = await this.buyerService.findByDocument(documentoList);
+      const unregisteredDocumentos = allDocumentos.filter(
+        ({ documento }) => !registeredDocumentos.includes(documento),
+      );
 
-      if (unregisteredCpfs.length > 0) {
+      if (unregisteredDocumentos.length > 0) {
         try {
-          await this.buyerService.registerBuyers(unregisteredCpfs);
+          await this.buyerService.registerBuyers(unregisteredDocumentos);
         } catch (error) {
           throw new CustomError(`Erro ao cadastrar CPF(s)/CNPJ(s): ${error.message}`);
         }

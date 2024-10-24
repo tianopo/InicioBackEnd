@@ -1,15 +1,15 @@
 import { IsNotEmpty, IsString, ValidateIf } from "class-validator";
-import { CPFFormat } from "../../../decorators/validators/regex.decorator";
+import { CNPJCPFFormat } from "../../../decorators/validators/regex.decorator";
 import { Required } from "../../required.dto";
 
 export class OperationDto extends Required {
   @IsString()
-  @ValidateIf((o) => o.cpf !== "")
-  @CPFFormat()
-  cpf?: string;
+  @ValidateIf((o) => o.documento !== "")
+  @CNPJCPFFormat()
+  documento?: string;
 
   @IsString()
-  @ValidateIf((o) => o.cpf !== "")
+  @ValidateIf((o) => o.documento !== "")
   nome: string;
 
   @IsString()

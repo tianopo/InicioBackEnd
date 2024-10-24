@@ -95,8 +95,8 @@ export class ComplianceService {
   }
 
   async operationRegister(data: OperationDto) {
-    const { cpf, nome, apelido, exchange } = data;
-
+    const { documento, nome, apelido, exchange } = data;
+    console.log(documento);
     const findBuyerByName = await this.buyerService.checkNameExists(nome, exchange);
     if (findBuyerByName)
       throw new CustomError("O nome do comprador já foi cadastrado em uma venda");
@@ -105,10 +105,11 @@ export class ComplianceService {
     if (findSellerByName)
       throw new CustomError("O nome do vendedor já foi cadastrado em uma venda");
 
-    if (cpf) {
-      const buyerExists = await this.buyerService.checkDocumentExists(cpf);
-      if (buyerExists) throw new CustomError("O CPF do comprador já foi cadastrado em uma venda");
-      await this.buyerService.registerBuyers([{ cpf, nome, apelido, exchange }]);
+    if (documento) {
+      const buyerExists = await this.buyerService.checkDocumentExists(documento);
+      if (buyerExists)
+        throw new CustomError("O CPF/CNPJ do comprador já foi cadastrado em uma venda");
+      await this.buyerService.registerBuyers([{ documento, nome, apelido, exchange }]);
     } else {
       const sellerExists = await this.sellerService.findSeller(data);
       if (sellerExists) throw new CustomError("O vendedor já foi cadastrado em uma compra");

@@ -23,11 +23,11 @@ export class BuyerService {
     return buyers;
   }
 
-  async findByCpf(cpfList: string[]) {
+  async findByDocument(documentList: string[]) {
     const buyers = await prisma.buyer.findMany({
       where: {
         document: {
-          in: cpfList,
+          in: documentList,
         },
       },
       select: {
@@ -35,19 +35,19 @@ export class BuyerService {
       },
     });
 
-    const registeredCpfs = buyers.map((buyer) => buyer.document);
-    return registeredCpfs;
+    const registeredDocuments = buyers.map((buyer) => buyer.document);
+    return registeredDocuments;
   }
 
   async registerBuyers(
-    buyerData: { cpf: string; nome: string; apelido: string; exchange: string }[],
+    buyerData: { documento: string; nome: string; apelido: string; exchange: string }[],
   ) {
     await prisma.$transaction(async (prismaTransaction) => {
-      for (const { cpf, nome, apelido, exchange } of buyerData) {
-        if (nome.length === 0) throw new CustomError(`${apelido} e ${cpf} não tem nome`);
+      for (const { documento: document, nome, apelido, exchange } of buyerData) {
+        if (nome.length === 0) throw new CustomError(`${apelido} e ${document} não tem nome`);
         await prismaTransaction.buyer.create({
           data: {
-            document: cpf,
+            document,
             name: nome,
             counterparty: apelido,
             exchange: exchange,
