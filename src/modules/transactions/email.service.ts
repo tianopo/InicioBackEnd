@@ -80,7 +80,7 @@ export class EmailService {
     const allSellExchanges = vendas.map((venda) => venda.exchangeUtilizada);
     const allCpfs = vendas
       .map((venda) => ({
-        cpf: venda.cpfComprador,
+        cpf: venda.documentoComprador,
         nome: venda.nomeComprador,
         apelido: venda.apelidoComprador,
         exchange: venda.exchangeUtilizada,
@@ -157,7 +157,7 @@ export class EmailService {
         ...venda,
         id: comprador ? comprador.id : null,
         nomeComprador: comprador ? comprador.name : venda.nomeComprador,
-        cpfComprador: comprador ? comprador.document : venda.cpfComprador,
+        documentoComprador: comprador ? comprador.document : venda.documentoComprador,
       };
     });
 

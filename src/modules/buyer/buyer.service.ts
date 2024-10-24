@@ -76,10 +76,10 @@ export class BuyerService {
     return buyers;
   }
 
-  async checkCpfExists(cpf: string): Promise<boolean> {
+  async checkDocumentExists(document: string): Promise<boolean> {
     const buyer = await prisma.buyer.findUnique({
       where: {
-        document: cpf,
+        document,
       },
     });
     return !!buyer;

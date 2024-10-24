@@ -9,9 +9,9 @@ export class VendaDto {
   apelidoComprador: string;
 
   @IsString()
-  @ValidateIf((o) => o.cpfComprador !== "")
+  @ValidateIf((o) => o.documentoComprador !== "")
   @CNPJCPFFormat()
-  cpfComprador?: string;
+  documentoComprador?: string;
 
   @IsString()
   @IsNotEmpty()

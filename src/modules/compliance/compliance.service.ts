@@ -25,7 +25,7 @@ export class ComplianceService {
     // https://api.portaldatransparencia.gov.br/swagger-ui/index.html#/
     const results: any = {};
 
-    const cpfExists = await this.buyerService.checkCpfExists(cpf);
+    const cpfExists = await this.buyerService.checkDocumentExists(cpf);
     if (cpfExists) results.ourData = "O CPF já foi cadastrado";
     else results.ourData = "CPF não cadastrado, cadastre um novo comprador.";
 
@@ -106,7 +106,7 @@ export class ComplianceService {
       throw new CustomError("O nome do vendedor já foi cadastrado em uma venda");
 
     if (cpf) {
-      const buyerExists = await this.buyerService.checkCpfExists(cpf);
+      const buyerExists = await this.buyerService.checkDocumentExists(cpf);
       if (buyerExists) throw new CustomError("O CPF do comprador já foi cadastrado em uma venda");
       await this.buyerService.registerBuyers([{ cpf, nome, apelido, exchange }]);
     } else {
