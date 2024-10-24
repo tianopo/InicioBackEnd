@@ -59,8 +59,8 @@ export class SellerService {
   }
 
   async findSeller(data: OperationDto) {
-    const { cpf, nome, apelido, exchange } = data;
-    if (cpf) throw new CustomError("Só cadastra Vendedor");
+    const { documento, nome, apelido, exchange } = data;
+    if (documento) throw new CustomError("Só cadastra Vendedor");
 
     const searchConditions: any[] = [];
     if (nome) searchConditions.push({ name: nome });
