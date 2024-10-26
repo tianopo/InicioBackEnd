@@ -228,7 +228,6 @@ export class EmailService {
   }
 
   async listTransactions(startDate: string, endDate: string) {
-    console.log(startDate, endDate, "date");
     if (!startDate || !endDate)
       throw new CustomError("Por favor, forneça ambas as datas de início e fim.");
 
@@ -248,7 +247,6 @@ export class EmailService {
         seller: true,
       },
     });
-    console.log(transactions);
 
     return transactions;
   }
