@@ -5,11 +5,10 @@ import { BuyerService } from "./buyer.service";
 @Controller("buyer")
 export class BuyerController {
   constructor(private readonly buyerService: BuyerService) {}
-  @Get("")
-  async validateToken() {
+  @Get()
+  async findBuyer() {
     try {
-      await this.buyerService.findBuyer();
-      return true;
+      return await this.buyerService.findCounterparty();
     } catch (error) {
       throw new CustomError("Comprador não encontrado");
     }
