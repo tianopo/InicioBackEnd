@@ -1,9 +1,11 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { ComplianceService } from "./compliance.service";
 import { ComplianceDto } from "./dto/compliance.dto";
 import { OperationDto } from "./dto/operations.dto";
+import { JwtAuthGuard } from "../../guard/auth.guard";
 
 @Controller("compliance")
+@UseGuards(JwtAuthGuard)
 export class ComplianceController {
   constructor(private readonly complianceService: ComplianceService) {}
 

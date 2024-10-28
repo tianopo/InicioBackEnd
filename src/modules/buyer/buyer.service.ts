@@ -39,6 +39,10 @@ export class BuyerService {
     return registeredDocuments;
   }
 
+  async findBuyer() {
+    return await prisma.buyer.findMany();
+  }
+
   async registerBuyers(
     buyerData: { documento: string; nome: string; apelido: string; exchange: string }[],
   ) {
