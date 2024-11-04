@@ -13,9 +13,8 @@ export class ComplianceService {
     private readonly sellerService: SellerService,
   ) {}
   async validate(data: ComplianceDto) {
-    const { cpf, cnpj } = data;
-    const cpfClean = cpf.replace(/\D/g, "");
-    const cnpjClean = cnpj ? cnpj.replace(/\D/g, "") : "";
+    const { documento } = data;
+    const documentoClean = documento.replace(/\D/g, "");
 
     const portalDaTransparenciaUrl = "https://api.portaldatransparencia.gov.br/api-de-dados/";
     const msgErr = (m: string) => `falha ao validar ${m}`;
@@ -25,7 +24,7 @@ export class ComplianceService {
     // https://api.portaldatransparencia.gov.br/swagger-ui/index.html#/
     const results: any = {};
 
-    const cpfExists = await this.buyerService.checkDocumentExists(cpf);
+    const cpfExists = await this.buyerService.checkDocumentExists(documento);
     if (cpfExists) results.ourData = "O CPF já foi cadastrado";
     else results.ourData = "CPF não cadastrado, cadastre um novo comprador.";
 
@@ -40,51 +39,52 @@ export class ComplianceService {
       }
     };
     const pepRsp = await fetchDataPortal(
-      `peps?cpf=${cpfClean}&pagina=1`,
+      `peps?cpf=${documentoClean}&pagina=1`,
       msgErr("Pessoa Politicamente Exposta"),
     );
     results.pep = pepRsp;
 
     const sdcRsp = await fetchDataPortal(
-      `seguro-defeso-codigo?codigo=${cpfClean}&pagina=1`,
+      `seguro-defeso-codigo?codigo=${documentoClean}&pagina=1`,
       msgErr("Seguro Defeso"),
     );
     results.sdc = sdcRsp;
 
     const safraRsp = await fetchDataPortal(
-      `safra-codigo-por-cpf-ou-nis?codigo=${cpfClean}&pagina=1`,
+      `safra-codigo-por-cpf-ou-nis?codigo=${documentoClean}&pagina=1`,
       msgErr("Garantia Safra"),
     );
     results.safra = safraRsp;
 
     const petiRsp = await fetchDataPortal(
-      `peti-por-cpf-ou-nis?codigo=${cpfClean}&pagina=1`,
+      `peti-por-cpf-ou-nis?codigo=${documentoClean}&pagina=1`,
       msgErr("Programa de Erradicação do Trabalho Infantil"),
     );
     results.peti = petiRsp;
 
     const bpcRsp = await fetchDataPortal(
-      `bpc-por-cpf-ou-nis?codigo=${cpfClean}&pagina=1`,
+      `bpc-por-cpf-ou-nis?codigo=${documentoClean}&pagina=1`,
       msgErr("Benefício de Prestação Continuada"),
     );
     results.bpc = bpcRsp;
 
     const aeRsp = await fetchDataPortal(
-      `auxilio-emergencial-por-cpf-ou-nis?codigoBeneficiario=${cpfClean}&codigoResponsavelFamiliar=${cpfClean}&pagina=1`,
+      `auxilio-emergencial-por-cpf-ou-nis?codigoBeneficiario=${documentoClean}&codigoResponsavelFamiliar=${documentoClean}&pagina=1`,
       msgErr("Auxílio Emergencial"),
     );
     results.ae = aeRsp;
 
+    const validaCNPJ = documento.length > 14;
     const cnepRsp = await fetchDataPortal(
-      `cnep?codigoSancionado=${cnpj ? cnpjClean : cpfClean}&pagina=1`,
+      `cnep?codigoSancionado=${documentoClean}&pagina=1`,
       msgErr("Auxílio Emergencial"),
     );
     results.cnep = cnepRsp;
 
-    if (cnpj) {
+    if (validaCNPJ) {
       try {
         // 3 requisições por minuto
-        const cnpjResponse = await axios.get(`https://receitaws.com.br/v1/cnpj/${cnpjClean}`);
+        const cnpjResponse = await axios.get(`https://receitaws.com.br/v1/cnpj/${documentoClean}`);
         results.cnpj = cnpjResponse.data;
       } catch (error) {
         results.cnpj = "Falha ao validar CNPJ.";
@@ -96,7 +96,6 @@ export class ComplianceService {
 
   async operationRegister(data: OperationDto) {
     const { documento, nome, apelido, exchange } = data;
-    console.log(documento);
     const findBuyerByName = await this.buyerService.checkNameExists(nome, exchange);
     if (findBuyerByName)
       throw new CustomError("O nome do comprador já foi cadastrado em uma venda");
@@ -118,5 +117,31 @@ export class ComplianceService {
     }
 
     return true;
+  }
+
+  async operationUpdate(data: OperationDto) {
+    const buyers = await this.buyerService.updateBuyer({ documento: data.documento, ...data });
+    const sellers = await this.sellerService.updateSeller(data);
+    if (!buyers && !sellers)
+      throw new CustomError("Comprador e Vendedor não encontrado para atualização");
+    return true;
+  }
+
+  async findUsers() {
+    const buyers = await this.buyerService.findBuyerUser();
+    const sellers = await this.sellerService.findSellerUser();
+
+    const normalizedBuyers = buyers.map((buyer) => ({
+      ...buyer,
+      document: buyer.document || "",
+    }));
+
+    const normalizedSellers = sellers.map((seller) => ({
+      ...seller,
+      document: "",
+    }));
+
+    const users = normalizedBuyers.concat(normalizedSellers);
+    return users;
   }
 }

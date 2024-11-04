@@ -23,6 +23,11 @@ export class SellerService {
     return sellers;
   }
 
+  async findSellerUser() {
+    const sellers = await prisma.seller.findMany();
+    return sellers;
+  }
+
   async registerSellers(sellerData: { nome: string; apelido: string; exchange: string }[]) {
     await prisma.$transaction(async (prismaTransaction) => {
       for (const { nome, apelido, exchange } of sellerData) {
@@ -88,5 +93,32 @@ export class SellerService {
       },
     });
     return !!seller;
+  }
+
+  async updateSeller(data: { nome: string; apelido: string; exchange: string }) {
+    const { nome, apelido, exchange } = data;
+
+    let seller = await prisma.seller.findFirst({
+      where: { name: nome, exchange },
+    });
+
+    if (!seller) {
+      seller = await prisma.seller.findFirst({
+        where: { counterparty: apelido },
+      });
+    }
+    if (!seller) return false;
+
+    await prisma.seller.update({
+      where: { id: seller.id },
+      data: {
+        name: nome,
+        counterparty: apelido,
+        exchange,
+      },
+    });
+    console.log(`Vendedor ${nome} atualizado com sucesso`);
+
+    return true;
   }
 }

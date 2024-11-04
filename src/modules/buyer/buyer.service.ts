@@ -45,6 +45,11 @@ export class BuyerService {
     return counterparties;
   }
 
+  async findBuyerUser() {
+    const buyers = await prisma.buyer.findMany();
+    return buyers;
+  }
+
   async registerBuyers(
     buyerData: { documento: string; nome: string; apelido: string; exchange: string }[],
   ) {
@@ -101,5 +106,32 @@ export class BuyerService {
       },
     });
     return !!buyer;
+  }
+
+  async updateBuyer(data: { documento: string; nome: string; apelido: string; exchange: string }) {
+    const { nome, apelido, exchange, documento } = data;
+    let buyer = await prisma.buyer.findFirst({
+      where: { name: nome, exchange },
+    });
+
+    if (!buyer) {
+      buyer = await prisma.buyer.findFirst({
+        where: { counterparty: apelido },
+      });
+    }
+    if (!buyer) return false;
+
+    await prisma.buyer.update({
+      where: { id: buyer.id },
+      data: {
+        name: nome,
+        counterparty: apelido,
+        exchange,
+        document: documento,
+      },
+    });
+    console.log(`Comprador ${nome} atualizado com sucesso`);
+
+    return true;
   }
 }

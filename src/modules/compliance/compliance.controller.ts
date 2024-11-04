@@ -1,8 +1,9 @@
-import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Put, UseGuards } from "@nestjs/common";
+import { CustomError } from "../../err/custom/Error.filter";
+import { JwtAuthGuard } from "../../guard/auth.guard";
 import { ComplianceService } from "./compliance.service";
 import { ComplianceDto } from "./dto/compliance.dto";
 import { OperationDto } from "./dto/operations.dto";
-import { JwtAuthGuard } from "../../guard/auth.guard";
 
 @Controller("compliance")
 @UseGuards(JwtAuthGuard)
@@ -17,5 +18,19 @@ export class ComplianceController {
   @Post("operation")
   async register(@Body() data: OperationDto) {
     return this.complianceService.operationRegister(data);
+  }
+
+  @Put("operation")
+  async update(@Body() data: OperationDto) {
+    return this.complianceService.operationUpdate(data);
+  }
+
+  @Get("operation")
+  async findUsers() {
+    try {
+      return await this.complianceService.findUsers();
+    } catch (error) {
+      throw new CustomError("Comprador não encontrado");
+    }
   }
 }
