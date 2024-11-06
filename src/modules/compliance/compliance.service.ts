@@ -12,6 +12,79 @@ export class ComplianceService {
     private readonly buyerService: BuyerService,
     private readonly sellerService: SellerService,
   ) {}
+
+  async cpfLight(listaCpf: string[]) {
+    const SERVER_URL = "https://h-apigateway.conectagov.estaleiro.serpro.gov.br";
+    const TOKEN_REQUEST_URL = `${SERVER_URL}/oauth2/jwt-token`;
+    const CLIENT_ID = "8ddc46f2-f6a3-4077-9e04-74b55de934a5";
+    const CLIENT_SECRET = "06d4aaac-1412-45f6-bd7c-38b2bef0d706";
+    const CONSULTA_CPF_URL = `${SERVER_URL}/api-cpf-light/v2/consulta/cpf`;
+    const EXPIRATION_WINDOW_IN_SECONDS = 300;
+    let tokenStorage: any;
+
+    const getToken = async () => {
+      const authHeader = "Basic " + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64");
+      console.log(authHeader);
+      try {
+        const response = await axios.post(TOKEN_REQUEST_URL, "grant_type=client_credentials", {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: authHeader,
+          },
+        });
+        console.log(response);
+        return response.data;
+      } catch (error) {
+        throw new CustomError("Erro ao obter token");
+      }
+    };
+
+    const extractExp = (token: string): number | null => {
+      const parts = token.split(".");
+      if (parts.length === 3) {
+        const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
+        return payload.exp;
+      }
+      return null;
+    };
+
+    const getAccessToken = async () => {
+      if (!tokenStorage) {
+        tokenStorage = await getToken();
+      } else {
+        const exp = extractExp(tokenStorage.access_token);
+        const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+        const expirationThreshold = currentTimeInSeconds + EXPIRATION_WINDOW_IN_SECONDS;
+
+        // Verifica se o token está próximo de expirar
+        if (exp && exp < expirationThreshold) {
+          tokenStorage = await getToken();
+        }
+      }
+      return tokenStorage.access_token;
+    };
+
+    const access_token = await getAccessToken();
+
+    try {
+      const response = await axios.post(
+        CONSULTA_CPF_URL,
+        { listaCpf },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-cpf-usuario": "00000000191",
+            Authorization: `Bearer ${access_token}`,
+          },
+        },
+      );
+      console.log(response.data);
+      return response.data;
+    } catch (error) {
+      throw new CustomError("Erro na consulta CPF Light");
+    }
+  }
+
   async validate(data: ComplianceDto) {
     const { documento } = data;
     const documentoClean = documento.replace(/\D/g, "");
@@ -122,6 +195,7 @@ export class ComplianceService {
   async operationUpdate(data: OperationDto) {
     const buyers = await this.buyerService.updateBuyer({ documento: data.documento, ...data });
     const sellers = await this.sellerService.updateSeller(data);
+
     if (!buyers && !sellers)
       throw new CustomError("Comprador e Vendedor não encontrado para atualização");
     return true;

@@ -86,12 +86,20 @@ export class SellerService {
   async checkNameExists(nome: string, exchange: string): Promise<boolean> {
     const seller = await prisma.seller.findFirst({
       where: {
-        AND: {
-          name: nome,
-          exchange,
-        },
+        AND: [
+          {
+            name: {
+              in: [nome, `${nome} Bloqueado`],
+            },
+          },
+          { exchange },
+        ],
       },
     });
+    if (seller !== null) {
+      const sellerBlocked = seller.name.split(" ")[seller.name.split(" ").length - 1];
+      if (sellerBlocked === "Bloqueado") throw new CustomError(`Usuário ${seller.name}`);
+    }
     return !!seller;
   }
 

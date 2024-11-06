@@ -93,18 +93,31 @@ export class BuyerService {
         document,
       },
     });
+    if (buyer !== null) {
+      const buyerBlocked = buyer.name.split(" ")[buyer.name.split(" ").length - 1];
+      if (buyerBlocked === "Bloqueado") throw new CustomError(`Usuário ${buyer.name}`);
+    }
     return !!buyer;
   }
 
   async checkNameExists(nome: string, exchange: string): Promise<boolean> {
+    console.log(nome);
     const buyer = await prisma.buyer.findFirst({
       where: {
-        AND: {
-          name: nome,
-          exchange,
-        },
+        AND: [
+          {
+            name: {
+              in: [nome, `${nome} Bloqueado`],
+            },
+          },
+          { exchange },
+        ],
       },
     });
+    if (buyer !== null) {
+      const buyerBlocked = buyer.name.split(" ")[buyer.name.split(" ").length - 1];
+      if (buyerBlocked === "Bloqueado") throw new CustomError(`Usuário ${buyer.name}`);
+    }
     return !!buyer;
   }
 
