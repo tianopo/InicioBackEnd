@@ -64,7 +64,7 @@ export class BuyerService {
             exchange: exchange,
           },
         });
-        console.log(`${nome} cadastrado com sucesso`);
+        console.log(`${apelido} de CPF ${document} cadastrado com sucesso`);
       }
     });
   }
@@ -101,7 +101,6 @@ export class BuyerService {
   }
 
   async checkNameExists(nome: string, exchange: string): Promise<boolean> {
-    console.log(nome);
     const buyer = await prisma.buyer.findFirst({
       where: {
         AND: [
@@ -118,6 +117,16 @@ export class BuyerService {
       const buyerBlocked = buyer.name.split(" ")[buyer.name.split(" ").length - 1];
       if (buyerBlocked === "Bloqueado") throw new CustomError(`Usuário ${buyer.name}`);
     }
+    return !!buyer;
+  }
+
+  async checkCounterpartyExists(counterparty: string, exchange: string): Promise<boolean> {
+    console.log(counterparty);
+    const buyer = await prisma.buyer.findFirst({
+      where: {
+        AND: [{ counterparty }, { exchange }],
+      },
+    });
     return !!buyer;
   }
 

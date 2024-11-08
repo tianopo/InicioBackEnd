@@ -169,23 +169,27 @@ export class ComplianceService {
 
   async operationRegister(data: OperationDto) {
     const { documento, nome, apelido, exchange } = data;
-    const findBuyerByName = await this.buyerService.checkNameExists(nome, exchange);
-    if (findBuyerByName)
-      throw new CustomError("O nome do comprador já foi cadastrado em uma venda");
+    const findBuyerByCounterparty = await this.buyerService.checkCounterpartyExists(
+      apelido,
+      exchange,
+    );
+    if (findBuyerByCounterparty) throw new CustomError(`${apelido} está cadastrado`);
 
-    const findSellerByName = await this.sellerService.checkNameExists(nome, exchange);
-    if (findSellerByName)
-      throw new CustomError("O nome do vendedor já foi cadastrado em uma venda");
+    const findSellerBycounterparty = await this.sellerService.checkCounterpartyExists(
+      apelido,
+      exchange,
+    );
+    if (findSellerBycounterparty) throw new CustomError(`${apelido} está cadastrado`);
+    if (!apelido) throw new CustomError("Precisa de um apelido para cadastro");
 
     if (documento) {
       const buyerExists = await this.buyerService.checkDocumentExists(documento);
       if (buyerExists)
-        throw new CustomError("O CPF/CNPJ do comprador já foi cadastrado em uma venda");
+        throw new CustomError(`O CPF/CNPJ ${documento} do comprador está cadastrado`);
       await this.buyerService.registerBuyers([{ documento, nome, apelido, exchange }]);
     } else {
       const sellerExists = await this.sellerService.findSeller(data);
-      if (sellerExists) throw new CustomError("O vendedor já foi cadastrado em uma compra");
-      if (!apelido) throw new CustomError("Precisa de um apelido para cadastro");
+      if (sellerExists) throw new CustomError(`O vendedor ${apelido} está cadastrado`);
       await this.sellerService.registerSellers([{ nome, apelido, exchange }]);
     }
 

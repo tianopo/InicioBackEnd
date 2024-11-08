@@ -31,9 +31,7 @@ export class SellerService {
   async registerSellers(sellerData: { nome: string; apelido: string; exchange: string }[]) {
     await prisma.$transaction(async (prismaTransaction) => {
       for (const { nome, apelido, exchange } of sellerData) {
-        if (nome.length === 0) {
-          throw new CustomError(`${apelido} não tem nome`);
-        }
+        if (nome.length === 0) throw new CustomError(`${apelido} não tem nome`);
         await prismaTransaction.seller.create({
           data: {
             name: nome,
@@ -41,7 +39,7 @@ export class SellerService {
             exchange: exchange,
           },
         });
-        console.log(`${nome} cadastrado com sucesso`);
+        console.log(`${apelido} cadastrado com sucesso`);
       }
     });
   }
@@ -100,6 +98,16 @@ export class SellerService {
       const sellerBlocked = seller.name.split(" ")[seller.name.split(" ").length - 1];
       if (sellerBlocked === "Bloqueado") throw new CustomError(`Usuário ${seller.name}`);
     }
+    return !!seller;
+  }
+
+  async checkCounterpartyExists(counterparty: string, exchange: string): Promise<boolean> {
+    console.log(counterparty);
+    const seller = await prisma.seller.findFirst({
+      where: {
+        AND: [{ counterparty }, { exchange }],
+      },
+    });
     return !!seller;
   }
 
