@@ -138,8 +138,17 @@ export class SellerService {
     return true;
   }
 
+  async findById(id: string) {
+    const seller = await prisma.seller.findUnique({
+      where: { id },
+    });
+    return seller;
+  }
+
   async delete(id: string) {
     if (!id) throw new CustomError("ID de usuário é obrigatório.");
+    const seller = await this.findById(id);
+    if (!seller) return;
     return prisma.seller.delete({
       where: { id },
     });

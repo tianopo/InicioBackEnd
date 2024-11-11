@@ -225,8 +225,8 @@ export class ComplianceService {
 
   async deleteUser(id: string) {
     const buyerDeleted = await this.buyerService.delete(id);
-    let sellerDeleted;
-    if (!buyerDeleted) sellerDeleted = await this.sellerService.delete(id);
+    const sellerDeleted = await this.sellerService.delete(id);
+    console.log(buyerDeleted, sellerDeleted);
 
     if (!buyerDeleted && !sellerDeleted) {
       throw new CustomError("Usuário não encontrado para exclusão");
