@@ -156,4 +156,11 @@ export class BuyerService {
 
     return true;
   }
+
+  async delete(id: string) {
+    if (!id) throw new CustomError("ID de usuário é obrigatório.");
+    return prisma.buyer.delete({
+      where: { id },
+    });
+  }
 }

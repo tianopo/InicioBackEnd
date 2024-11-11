@@ -222,4 +222,15 @@ export class ComplianceService {
     const users = normalizedBuyers.concat(normalizedSellers);
     return users;
   }
+
+  async deleteUser(id: string) {
+    const buyerDeleted = await this.buyerService.delete(id);
+    let sellerDeleted;
+    if (!buyerDeleted) sellerDeleted = await this.sellerService.delete(id);
+
+    if (!buyerDeleted && !sellerDeleted) {
+      throw new CustomError("Usuário não encontrado para exclusão");
+    }
+    return true;
+  }
 }

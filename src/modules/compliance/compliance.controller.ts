@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { CustomError } from "../../err/custom/Error.filter";
 import { JwtAuthGuard } from "../../guard/auth.guard";
 import { ComplianceService } from "./compliance.service";
@@ -30,7 +30,16 @@ export class ComplianceController {
     try {
       return await this.complianceService.findUsers();
     } catch (error) {
-      throw new CustomError("Comprador não encontrado");
+      throw new CustomError("Usuário não encontrado");
+    }
+  }
+
+  @Delete("operation/delete/:id")
+  async delete(@Param("id") id: string) {
+    try {
+      return await this.complianceService.deleteUser(id);
+    } catch (error) {
+      throw new CustomError(`${id} não encontrado`);
     }
   }
 }
