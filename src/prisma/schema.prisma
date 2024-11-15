@@ -53,7 +53,7 @@ model Order {
   createdIn DateTime @default(now())
   updated   DateTime @default(now()) @updatedAt
 
-  numeroOrdem   String @unique
+  numeroOrdem   String
   dataTransacao String
   exchange      String
   ativoDigital  String

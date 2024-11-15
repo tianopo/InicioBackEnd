@@ -102,12 +102,15 @@ export class SellerService {
   }
 
   async checkCounterpartyExists(counterparty: string, exchange: string): Promise<boolean> {
-    console.log(counterparty);
     const seller = await prisma.seller.findFirst({
       where: {
         AND: [{ counterparty }, { exchange }],
       },
     });
+    if (seller !== null) {
+      const sellerBlocked = seller.name.split(" ")[seller.name.split(" ").length - 1];
+      if (sellerBlocked === "Bloqueado") throw new CustomError(`Usuário ${seller.name}`);
+    }
     return !!seller;
   }
 
