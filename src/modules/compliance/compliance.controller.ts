@@ -42,4 +42,15 @@ export class ComplianceController {
       throw new CustomError(`${id} não encontrado`);
     }
   }
+
+  @Post("consultar-cpf")
+  async consultarCpf(
+    @Body() data: { cpf: string; dataNascimento: string; captchaResponse: string },
+  ) {
+    try {
+      return await this.complianceService.consultarCpf(data);
+    } catch (error) {
+      throw new CustomError("Erro ao consultar CPF na Receita Federal");
+    }
+  }
 }

@@ -233,4 +233,32 @@ export class ComplianceService {
     }
     return true;
   }
+  async consultarCpf(data: { cpf: string; dataNascimento: string; captchaResponse: string }) {
+    const { cpf, dataNascimento, captchaResponse } = data;
+
+    try {
+      const response = await axios.post(
+        "https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublicaExibir.asp",
+        new URLSearchParams({
+          idCheckedReCaptcha: "false",
+          txtCPF: cpf,
+          txtDataNascimento: dataNascimento,
+          "h-captcha-response": captchaResponse,
+          Enviar: "Consultar",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            Origin: "https://servicos.receita.fazenda.gov.br",
+            Referer:
+              "https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublica.asp",
+          },
+        },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error("Erro ao consultar CPF na Receita Federal");
+    }
+  }
 }
