@@ -111,6 +111,13 @@ export class ComplianceService {
         return errorMsg;
       }
     };
+
+    const viagensRsp = await fetchDataPortal(
+      `viagens-por-cpf?cpf=${documentoClean}&pagina=1`,
+      msgErr("Viajantes por CPF"),
+    );
+    results.viagens = viagensRsp;
+
     const pepRsp = await fetchDataPortal(
       `peps?cpf=${documentoClean}&pagina=1`,
       msgErr("Pessoa Politicamente Exposta"),
@@ -147,18 +154,44 @@ export class ComplianceService {
     );
     results.ae = aeRsp;
 
-    const validaCNPJ = documento.length > 14;
+    const cfRsp = await fetchDataPortal(
+      `contratos/cpf-cnpj?cpfCnpj=${documentoClean}&pagina=1`,
+      msgErr("Contrato do Poder Executivo"),
+    );
+    results.cf = cfRsp;
+
     const cnepRsp = await fetchDataPortal(
       `cnep?codigoSancionado=${documentoClean}&pagina=1`,
       msgErr("Auxílio Emergencial"),
     );
     results.cnep = cnepRsp;
 
+    const validaCNPJ = documento.length > 14;
+    const encodedDocumento = validaCNPJ ? encodeURIComponent(documento) : documento;
+
+    const ceisRsp = await fetchDataPortal(
+      `ceis?codigoSancionado=${encodedDocumento}&pagina=1`,
+      msgErr("Cadastro Nacional de Empresas Inidôneas e Suspensas"),
+    );
+    results.ceis = ceisRsp;
+
+    const ceafRsp = await fetchDataPortal(
+      `ceaf?codigoSancionado=${encodedDocumento}&pagina=1`,
+      msgErr("Componente Especializado da Assistência Farmacêutica"),
+    );
+    results.ceaf = ceafRsp;
+
     if (validaCNPJ) {
       try {
         // 3 requisições por minuto
         const cnpjResponse = await axios.get(`https://receitaws.com.br/v1/cnpj/${documentoClean}`);
         results.cnpj = cnpjResponse.data;
+
+        const cepimRsp = await fetchDataPortal(
+          `cepim?cnpjSancionado=${encodedDocumento}&pagina=1`,
+          msgErr("Entidades Privadas sem Fins Lucrativos Impedidas"),
+        );
+        results.cepim = cepimRsp;
       } catch (error) {
         results.cnpj = "Falha ao validar CNPJ.";
       }
