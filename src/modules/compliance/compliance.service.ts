@@ -87,6 +87,7 @@ export class ComplianceService {
       msgErr("Contrato do Poder Executivo"),
     );
     results.cf = cfRsp;
+    if (cfRsp !== "") throw new CustomError("Este CPF não existe");
 
     const cnepRsp = await fetchDataPortal(
       `cnep?codigoSancionado=${documentoClean}&pagina=1`,
@@ -104,10 +105,10 @@ export class ComplianceService {
     results.ceis = ceisRsp;
 
     const ceafRsp = await fetchDataPortal(
-      `ceaf?codigoSancionado=${encodedDocumento}&pagina=1`,
+      `ceaf?codigoSancionado=${documentoClean}&pagina=1`,
       msgErr("Componente Especializado da Assistência Farmacêutica"),
     );
-    results.ceaf = ceafRsp;
+    if (results.ceaf !== undefined) results.ceaf = ceafRsp;
 
     if (validaCNPJ) {
       try {
