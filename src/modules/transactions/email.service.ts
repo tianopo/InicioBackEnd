@@ -93,7 +93,7 @@ export class EmailService {
       const unregisteredDocumentos = allDocumentos.filter(
         ({ documento }) => !registeredDocumentos.includes(documento),
       );
-
+      console.log("1");
       if (unregisteredDocumentos.length > 0) {
         try {
           await this.buyerService.registerBuyers(unregisteredDocumentos);
@@ -195,7 +195,7 @@ export class EmailService {
           },
         });
       }
-
+      throw new CustomError("passou");
       for (const compra of comprasComNome) {
         await prisma.order.create({
           data: {

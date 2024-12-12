@@ -39,10 +39,13 @@ export class BuyerService {
     return registeredDocuments;
   }
 
-  async findCounterparty() {
+  async findCounterpartyAndName() {
     const buyers = await prisma.buyer.findMany();
-    const counterparties = buyers.map((buyer) => buyer.counterparty);
-    return counterparties;
+    const counterpartiesAndNames = buyers.map((buyer) => ({
+      counterparty: buyer.counterparty,
+      name: buyer.name,
+    }));
+    return counterpartiesAndNames;
   }
 
   async findBuyerUser() {
