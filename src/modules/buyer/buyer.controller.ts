@@ -8,7 +8,7 @@ export class BuyerController {
   @Get()
   async findBuyer() {
     try {
-      return await this.buyerService.findCounterparty();
+      return await this.buyerService.findBuyerUser();
     } catch (error) {
       throw new CustomError("Comprador não encontrado");
     }
