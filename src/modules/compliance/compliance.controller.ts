@@ -17,12 +17,12 @@ export class ComplianceController {
 
   @Post("operation")
   async register(@Body() data: OperationDto) {
-    return this.complianceService.operationRegister(data);
+    return this.complianceService.usersRegister(data);
   }
 
   @Put("operation")
   async update(@Body() data: OperationDto) {
-    return this.complianceService.operationUpdate(data);
+    return this.complianceService.usersUpdate(data);
   }
 
   @Get("operation")

@@ -177,6 +177,19 @@ export class EmailService {
     // Registro das ordens de compra e venda no banco de dados
     await prisma.$transaction(async (prisma) => {
       for (const venda of vendasComNome) {
+        const existingOrder = await prisma.order.findFirst({
+          where: {
+            numeroOrdem: venda.numeroOrdem,
+            exchange: venda.exchangeUtilizada,
+          },
+        });
+
+        if (existingOrder) {
+          throw new CustomError(
+            `Ordem com número ${venda.numeroOrdem} já existe na exchange ${venda.exchangeUtilizada.split(" ")[0]}`,
+          );
+        }
+
         await prisma.order.create({
           data: {
             createdIn: new Date(venda.dataHoraTransacao),
@@ -195,7 +208,7 @@ export class EmailService {
           },
         });
       }
-      throw new CustomError("passou");
+
       for (const compra of comprasComNome) {
         await prisma.order.create({
           data: {

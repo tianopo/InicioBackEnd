@@ -128,7 +128,7 @@ export class ComplianceService {
     return results;
   }
 
-  async operationRegister(data: OperationDto) {
+  async usersRegister(data: OperationDto) {
     const { documento, nome, apelido, exchange } = data;
     const findBuyerByCounterparty = await this.buyerService.checkCounterpartyExists(
       apelido,
@@ -157,7 +157,7 @@ export class ComplianceService {
     return true;
   }
 
-  async operationUpdate(data: OperationDto) {
+  async usersUpdate(data: OperationDto) {
     const buyers = await this.buyerService.updateBuyer({ documento: data.documento, ...data });
     const sellers = await this.sellerService.updateSeller(data);
 
