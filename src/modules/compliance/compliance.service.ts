@@ -15,17 +15,24 @@ export class ComplianceService {
 
   async apiPortalDaTransparencia(documento: string) {
     // https://api.portaldatransparencia.gov.br/swagger-ui/index.html#/
-    const portalDaTransparenciaUrl = "https://api.portaldatransparencia.gov.br/api-de-dados/";
+    const apiPortalDaTransparencia = "https://api.portaldatransparencia.gov.br/";
+    const portalDaTransparenciaUrl = `${apiPortalDaTransparencia}api-de-dados/`;
     const apiKeySwagger = "17326962a1b9461a5cf39e98e21734d0";
     const documentoClean = documento.replace(/\D/g, "");
     const results: any = {};
     const msgErr = (m: string) => `falha ao validar ${m}`;
+    const headers = { headers: { "chave-api-dados": apiKeySwagger } };
+
+    const responseCPF = await axios.get(
+      `
+        ${apiPortalDaTransparencia}pessoa-fisica?cpf=${documentoClean}`,
+      headers,
+    );
+    results.cpf = responseCPF.data;
 
     const fetchDataPortal = async (url: string, errorMsg: string) => {
       try {
-        const response = await axios.get(`${portalDaTransparenciaUrl}${url}`, {
-          headers: { "chave-api-dados": apiKeySwagger },
-        });
+        const response = await axios.get(`${portalDaTransparenciaUrl}${url}`, headers);
         return response.data.length ? response.data[0] : "";
       } catch (error) {
         return errorMsg;
@@ -124,13 +131,13 @@ export class ComplianceService {
   async validate(data: ComplianceDto) {
     const { documento } = data;
     const apiKeyInfoSimples = "nR1TnskfynTogH1BFR2oqZPZ4kAv4uAeIrprFbFm";
-    let results: any = {};
+    const results: any = {};
 
     const cpfExists = await this.buyerService.checkDocumentExists(documento);
     if (cpfExists) results.ourData = "O CPF já foi cadastrado";
     else results.ourData = "CPF não cadastrado, cadastre um novo comprador.";
 
-    results = await this.apiPortalDaTransparencia(documento);
+    results.pdt = await this.apiPortalDaTransparencia(documento);
     return results;
   }
 
@@ -193,7 +200,6 @@ export class ComplianceService {
   async deleteUser(id: string) {
     const buyerDeleted = await this.buyerService.delete(id);
     const sellerDeleted = await this.sellerService.delete(id);
-    console.log(buyerDeleted, sellerDeleted);
 
     if (!buyerDeleted && !sellerDeleted) {
       throw new CustomError("Usuário não encontrado para exclusão");
