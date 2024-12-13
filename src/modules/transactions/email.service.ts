@@ -76,6 +76,7 @@ export class EmailService {
       throw new CustomError("Vendas e Compras devem ser arrays");
     }
     /* Validação de cadastro do Comprador */
+    const AllTimes = vendas.map((venda) => venda.dataHoraTransacao);
     const allSellCounterparties = vendas.map((venda) => venda.apelidoComprador);
     const allSellExchanges = vendas.map((venda) => venda.exchangeUtilizada);
     const allDocumentos = vendas
@@ -112,14 +113,18 @@ export class EmailService {
       allSellExchanges,
     );
     const registeredCounterpartyBuyer = buyers.map((buyer) => buyer.counterparty);
-    const unregisteredCounterpartyBuyer = allSellCounterparties.filter(
-      (counterparty) => !registeredCounterpartyBuyer.includes(counterparty),
-    );
+    const unregisteredCounterpartyBuyerDetails = allSellCounterparties
+      .map((counterparty, index) => ({
+        counterparty,
+        dataHoraTransacao: AllTimes[index],
+      }))
+      .filter(({ counterparty }) => !registeredCounterpartyBuyer.includes(counterparty));
 
-    if (unregisteredCounterpartyBuyer.length > 0) {
-      throw new CustomError(
-        `Preencha CPF e nome, compradores não cadastrados: ${unregisteredCounterpartyBuyer.join(", ")}`,
-      );
+    if (unregisteredCounterpartyBuyerDetails.length > 0) {
+      const details = unregisteredCounterpartyBuyerDetails
+        .map(({ counterparty, dataHoraTransacao }) => `${counterparty} - ${dataHoraTransacao} `)
+        .join("/ ");
+      throw new CustomError(`Preencha CPF e nome, compradores não cadastrados: ${details}`);
     }
 
     /* Validação e registro de novos vendedores */
@@ -143,7 +148,7 @@ export class EmailService {
       try {
         await this.sellerService.registerSellers(unregisteredCounterpartySeller);
       } catch (error) {
-        throw new CustomError(`Erro ao cadastrar vendedor: ${error.message}`);
+        throw new CustomError(`Erro ao cadastrar vendedor: ${error.message} `);
       }
     }
 
@@ -186,7 +191,7 @@ export class EmailService {
 
         if (existingOrder) {
           throw new CustomError(
-            `Ordem com número ${venda.numeroOrdem} já existe na exchange ${venda.exchangeUtilizada.split(" ")[0]}`,
+            `Ordem com número ${venda.numeroOrdem} já existe na exchange ${venda.exchangeUtilizada.split(" ")[0]} `,
           );
         }
 
@@ -244,8 +249,8 @@ export class EmailService {
     if (!startDate || !endDate)
       throw new CustomError("Por favor, forneça ambas as datas de início e fim.");
 
-    const start = new Date(`${startDate}T00:00:00`);
-    const end = new Date(`${endDate}T23:59:59`);
+    const start = new Date(`${startDate} T00:00:00`);
+    const end = new Date(`${endDate} T23: 59: 59`);
 
     // Busca no banco de dados as transações entre essas datas
     const transactions = await prisma.order.findMany({
