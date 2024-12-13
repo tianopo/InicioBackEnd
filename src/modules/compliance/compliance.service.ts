@@ -13,21 +13,13 @@ export class ComplianceService {
     private readonly sellerService: SellerService,
   ) {}
 
-  async validate(data: ComplianceDto) {
-    const { documento } = data;
-    const documentoClean = documento.replace(/\D/g, "");
-
-    const portalDaTransparenciaUrl = "https://api.portaldatransparencia.gov.br/api-de-dados/";
-    const msgErr = (m: string) => `falha ao validar ${m}`;
-
-    const apiKeySwagger = "17326962a1b9461a5cf39e98e21734d0";
-    const apiKeyInfoSimples = "nR1TnskfynTogH1BFR2oqZPZ4kAv4uAeIrprFbFm";
+  async apiPortalDaTransparencia(documento: string) {
     // https://api.portaldatransparencia.gov.br/swagger-ui/index.html#/
+    const portalDaTransparenciaUrl = "https://api.portaldatransparencia.gov.br/api-de-dados/";
+    const apiKeySwagger = "17326962a1b9461a5cf39e98e21734d0";
+    const documentoClean = documento.replace(/\D/g, "");
     const results: any = {};
-
-    const cpfExists = await this.buyerService.checkDocumentExists(documento);
-    if (cpfExists) results.ourData = "O CPF já foi cadastrado";
-    else results.ourData = "CPF não cadastrado, cadastre um novo comprador.";
+    const msgErr = (m: string) => `falha ao validar ${m}`;
 
     const fetchDataPortal = async (url: string, errorMsg: string) => {
       try {
@@ -126,6 +118,19 @@ export class ComplianceService {
       }
     }
 
+    return results;
+  }
+
+  async validate(data: ComplianceDto) {
+    const { documento } = data;
+    const apiKeyInfoSimples = "nR1TnskfynTogH1BFR2oqZPZ4kAv4uAeIrprFbFm";
+    let results: any = {};
+
+    const cpfExists = await this.buyerService.checkDocumentExists(documento);
+    if (cpfExists) results.ourData = "O CPF já foi cadastrado";
+    else results.ourData = "CPF não cadastrado, cadastre um novo comprador.";
+
+    results = await this.apiPortalDaTransparencia(documento);
     return results;
   }
 
