@@ -22,37 +22,6 @@ export class BuyerService {
       },
     });
 
-    // Identifica as counterparties não encontradas
-    const foundCounterparties = buyers.map((buyer) => buyer.counterparty && buyer.exchange);
-    const missingCounterparties = counterparties.filter(
-      (counterparty) => !foundCounterparties.includes(counterparty),
-    );
-    console.log(missingCounterparties, foundCounterparties, counterparties);
-    if (missingCounterparties.length > 0) {
-      // Busca novamente apenas pelas counterparties ausentes
-      const missingBuyers = await prisma.buyer.findMany({
-        where: {
-          counterparty: {
-            in: missingCounterparties,
-          },
-        },
-        select: {
-          counterparty: true,
-          exchange: true,
-        },
-      });
-      // Se encontrar algum buyer, mas com exchange diferente, lança um erro
-      if (missingBuyers.length > 0) {
-        const mismatchDetails = missingBuyers
-          .map(
-            (buyer) => `
-          ${buyer.counterparty} foi cadastrado na ${buyer.exchange.split(" ")[0]}`,
-          )
-          .join(", ");
-        throw new CustomError(`Usuários cadastrados em corretoras diferentes: ${mismatchDetails}`);
-      }
-    }
-
     return buyers;
   }
 

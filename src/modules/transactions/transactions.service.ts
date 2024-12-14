@@ -17,7 +17,6 @@ export class TransactionsService {
       throw new CustomError("Vendas e Compras devem ser arrays");
     }
     /* Validação de cadastro do Comprador */
-    const AllTimes = vendas.map((venda) => venda.dataHoraTransacao);
     const allSellCounterparties = vendas.map((venda) => venda.apelidoComprador);
     const allSellExchanges = vendas.map((venda) => venda.exchangeUtilizada);
     const allDocumentos = vendas
@@ -55,18 +54,25 @@ export class TransactionsService {
     );
 
     const registeredCounterpartyBuyer = buyers.map((buyer) => buyer.counterparty);
-    const unregisteredCounterpartyBuyerDetails = allSellCounterparties
-      .map((counterparty, index) => ({
-        counterparty,
-        dataHoraTransacao: AllTimes[index],
+    const unregisteredCounterpartyBuyerDetails = vendas
+      .map((venda) => ({
+        counterparty: venda.apelidoComprador,
+        order: venda.numeroOrdem, // Supondo que exista o campo `numeroOrdem`
+        dataHoraTransacao: venda.dataHoraTransacao,
+        exchange: venda.exchangeUtilizada,
       }))
       .filter(({ counterparty }) => !registeredCounterpartyBuyer.includes(counterparty));
 
     if (unregisteredCounterpartyBuyerDetails.length > 0) {
+      // Formata a mensagem de erro com detalhes do comprador e suas respectivas ordens
       const details = unregisteredCounterpartyBuyerDetails
-        .map(({ counterparty, dataHoraTransacao }) => `${counterparty} - ${dataHoraTransacao} `)
-        .join("/ ");
-      throw new CustomError(`Preencha CPF e nome, compradores não cadastrados: ${details}`);
+        .map(
+          ({ counterparty, order, dataHoraTransacao, exchange }) =>
+            `Usuário: ${counterparty} | Ordem: ${order} | Data/Hora: ${dataHoraTransacao} | Exchange: ${exchange}`,
+        )
+        .join("\n");
+
+      throw new CustomError(`Preencha CPF e nome. Compradores não cadastrados:\n${details}`);
     }
 
     /* Validação e registro de novos vendedores */
@@ -133,7 +139,7 @@ export class TransactionsService {
 
         if (existingOrder) {
           throw new CustomError(
-            `Ordem com número ${venda.numeroOrdem} já existe na exchange ${venda.exchangeUtilizada.split(" ")[0]} `,
+            `Ordem ${venda.numeroOrdem} da data ${venda.dataHoraTransacao} já existe na ${venda.exchangeUtilizada.split(" ")[0]} `,
           );
         }
 
