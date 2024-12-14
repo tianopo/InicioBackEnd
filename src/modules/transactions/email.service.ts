@@ -112,6 +112,7 @@ export class EmailService {
       allSellCounterparties,
       allSellExchanges,
     );
+
     const registeredCounterpartyBuyer = buyers.map((buyer) => buyer.counterparty);
     const unregisteredCounterpartyBuyerDetails = allSellCounterparties
       .map((counterparty, index) => ({
@@ -246,13 +247,18 @@ export class EmailService {
   }
 
   async listTransactions(startDate: string, endDate: string) {
-    if (!startDate || !endDate)
+    if (!startDate || !endDate) {
       throw new CustomError("Por favor, forneça ambas as datas de início e fim.");
+    }
 
-    const start = new Date(`${startDate} T00:00:00`);
-    const end = new Date(`${endDate} T23: 59: 59`);
+    // Validando e criando objetos de data corretamente
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T23:59:59`);
 
-    // Busca no banco de dados as transações entre essas datas
+    // Verificar se as datas são válidas
+    if (isNaN(start.getTime()) || isNaN(end.getTime()))
+      throw new CustomError("Datas fornecidas são inválidas.");
+
     const transactions = await prisma.order.findMany({
       where: {
         createdIn: {
