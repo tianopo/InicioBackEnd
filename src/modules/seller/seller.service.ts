@@ -94,10 +94,7 @@ export class SellerService {
         ],
       },
     });
-    if (seller !== null) {
-      const sellerBlocked = seller.name.split(" ")[seller.name.split(" ").length - 1];
-      if (sellerBlocked === "Bloqueado") throw new CustomError(`Usuário ${seller.name}`);
-    }
+    if (seller !== null) if (seller.blocked) throw new CustomError(`Usuário ${seller.name}`);
     return !!seller;
   }
 
@@ -107,15 +104,17 @@ export class SellerService {
         AND: [{ counterparty }, { exchange }],
       },
     });
-    if (seller !== null) {
-      const sellerBlocked = seller.name.split(" ")[seller.name.split(" ").length - 1];
-      if (sellerBlocked === "Bloqueado") throw new CustomError(`Usuário ${seller.name}`);
-    }
+    if (seller !== null) if (seller.blocked) throw new CustomError(`Usuário ${seller.name}`);
     return !!seller;
   }
 
-  async updateSeller(data: { nome: string; apelido: string; exchange: string }) {
-    const { nome, apelido, exchange } = data;
+  async updateSeller(data: {
+    nome: string;
+    apelido: string;
+    exchange: string;
+    bloqueado: boolean;
+  }) {
+    const { nome, apelido, exchange, bloqueado } = data;
 
     let seller = await prisma.seller.findFirst({
       where: { name: nome, exchange },
@@ -134,6 +133,7 @@ export class SellerService {
         name: nome,
         counterparty: apelido,
         exchange,
+        blocked: bloqueado,
       },
     });
     console.log(`Vendedor ${nome} atualizado com sucesso`);

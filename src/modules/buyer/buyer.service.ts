@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { prisma } from "../../config/prisma-connection";
 import { CustomError } from "../../err/custom/Error.filter";
+import { OperationDto } from "../compliance/dto/operations.dto";
 
 @Injectable()
 export class BuyerService {
@@ -128,10 +129,7 @@ export class BuyerService {
         document,
       },
     });
-    if (buyer !== null) {
-      const buyerBlocked = buyer.name.split(" ")[buyer.name.split(" ").length - 1];
-      if (buyerBlocked === "Bloqueado") throw new CustomError(`Usuário ${buyer.name}`);
-    }
+    if (buyer !== null) if (buyer.blocked) throw new CustomError(`Usuário ${buyer.name}`);
     return !!buyer;
   }
 
@@ -148,10 +146,7 @@ export class BuyerService {
         ],
       },
     });
-    if (buyer !== null) {
-      const buyerBlocked = buyer.name.split(" ")[buyer.name.split(" ").length - 1];
-      if (buyerBlocked === "Bloqueado") throw new CustomError(`Usuário ${buyer.name}`);
-    }
+    if (buyer !== null) if (buyer.blocked) throw new CustomError(`Usuário ${buyer.name}`);
     return !!buyer;
   }
 
@@ -161,15 +156,12 @@ export class BuyerService {
         AND: [{ counterparty }, { exchange }],
       },
     });
-    if (buyer !== null) {
-      const buyerBlocked = buyer.name.split(" ")[buyer.name.split(" ").length - 1];
-      if (buyerBlocked === "Bloqueado") throw new CustomError(`Usuário ${buyer.name}`);
-    }
+    if (buyer !== null) if (buyer.blocked) throw new CustomError(`Usuário ${buyer.name}`);
     return !!buyer;
   }
 
-  async updateBuyer(data: { documento: string; nome: string; apelido: string; exchange: string }) {
-    const { nome, apelido, exchange, documento } = data;
+  async updateBuyer(data: OperationDto) {
+    const { nome, apelido, exchange, documento, bloqueado } = data;
     let buyer = await prisma.buyer.findFirst({
       where: { name: nome, exchange },
     });
@@ -188,6 +180,7 @@ export class BuyerService {
         counterparty: apelido,
         exchange,
         document: documento,
+        blocked: bloqueado,
       },
     });
     console.log(`Comprador ${nome} atualizado com sucesso`);

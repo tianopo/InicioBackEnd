@@ -30,7 +30,9 @@ model Buyer {
   counterparty String
   exchange     String
   document     String  @unique
-  Order        Order[]
+  blocked      Boolean @default(false)
+
+  Order Order[]
 
   @@map("buyer")
 }
@@ -43,7 +45,9 @@ model Seller {
   name         String
   counterparty String
   exchange     String
-  Order        Order[]
+  blocked      Boolean @default(false)
+
+  Order Order[]
 
   @@map("seller")
 }

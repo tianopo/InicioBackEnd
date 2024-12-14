@@ -171,8 +171,13 @@ export class ComplianceService {
   }
 
   async usersUpdate(data: OperationDto) {
-    const buyers = await this.buyerService.updateBuyer({ documento: data.documento, ...data });
-    const sellers = await this.sellerService.updateSeller(data);
+    const buyers = await this.buyerService.updateBuyer(data);
+    const sellers = await this.sellerService.updateSeller({
+      nome: data.nome,
+      apelido: data.apelido,
+      exchange: data.exchange,
+      bloqueado: data.bloqueado,
+    });
 
     if (!buyers && !sellers)
       throw new CustomError("Comprador e Vendedor não encontrado para atualização");
@@ -186,11 +191,13 @@ export class ComplianceService {
     const normalizedBuyers = buyers.map((buyer) => ({
       ...buyer,
       document: buyer.document || "",
+      blocked: buyer.blocked || false,
     }));
 
     const normalizedSellers = sellers.map((seller) => ({
       ...seller,
       document: "",
+      blocked: false,
     }));
 
     const users = normalizedBuyers.concat(normalizedSellers);

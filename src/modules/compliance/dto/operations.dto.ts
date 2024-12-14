@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, ValidateIf } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, ValidateIf } from "class-validator";
 import { CNPJCPFFormat } from "../../../decorators/validators/regex.decorator";
 import { Required } from "../../required.dto";
 
@@ -19,4 +19,8 @@ export class OperationDto extends Required {
   @IsString()
   @IsNotEmpty()
   exchange: string;
+
+  @IsBoolean()
+  @IsOptional()
+  bloqueado?: boolean;
 }
