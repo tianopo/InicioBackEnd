@@ -60,7 +60,8 @@ export class BuyerService {
   ) {
     await prisma.$transaction(async (prismaTransaction) => {
       for (const { documento: document, nome, apelido, exchange } of buyerData) {
-        if (nome.length === 0) throw new CustomError(`${apelido} e ${document} não tem nome`);
+        if (nome.length === 0)
+          throw new CustomError(`comprador ${apelido} e ${document} não tem nome`);
         await prismaTransaction.buyer.create({
           data: {
             document,

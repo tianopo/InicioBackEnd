@@ -31,7 +31,7 @@ export class SellerService {
   async registerSellers(sellerData: { nome: string; apelido: string; exchange: string }[]) {
     await prisma.$transaction(async (prismaTransaction) => {
       for (const { nome, apelido, exchange } of sellerData) {
-        if (nome.length === 0) throw new CustomError(`${apelido} não tem nome`);
+        if (nome.length === 0) throw new CustomError(`vendedor ${apelido} não tem nome`);
         await prismaTransaction.seller.create({
           data: {
             name: nome,

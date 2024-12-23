@@ -86,7 +86,7 @@ export class ComplianceService {
       msgErr("Contrato do Poder Executivo"),
     );
     results.cf = cfRsp;
-    if (cfRsp !== "") throw new CustomError("Este CPF não existe");
+    // if (cfRsp !== "") throw new CustomError("Este CPF não existe");
 
     const cnepRsp = await fetchDataPortal(
       `cnep?codigoSancionado=${documentoClean}&pagina=1`,
@@ -147,13 +147,13 @@ export class ComplianceService {
       apelido,
       exchange,
     );
-    if (findBuyerByCounterparty) throw new CustomError(`${apelido} está cadastrado`);
+    if (findBuyerByCounterparty) throw new CustomError(`o comprador ${apelido} está cadastrado`);
 
     const findSellerBycounterparty = await this.sellerService.checkCounterpartyExists(
       apelido,
       exchange,
     );
-    if (findSellerBycounterparty) throw new CustomError(`${apelido} está cadastrado`);
+    if (findSellerBycounterparty) throw new CustomError(`o vendedor ${apelido} está cadastrado`);
     if (!apelido) throw new CustomError("Precisa de um apelido para cadastro");
 
     if (documento) {
