@@ -68,7 +68,7 @@ export class TransactionsService {
       const details = unregisteredCounterpartyBuyerDetails
         .map(
           ({ counterparty, order, dataHoraTransacao, exchange }) =>
-            `Usuário: ${counterparty} | Ordem: ${order} | Data/Hora: ${dataHoraTransacao} | Exchange: ${exchange}`,
+            `Usuário: ${counterparty} | Ordem: ${order} | Data/Hora: ${dataHoraTransacao} | Exchange: ${exchange.split(" ")[0]}`,
         )
         .join("\n");
 
