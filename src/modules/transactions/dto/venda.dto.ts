@@ -4,8 +4,6 @@ import { CNPJCPFFormat } from "../../../decorators/validators/regex.decorator";
 export class VendaDto {
   nomeComprador: string;
 
-  @IsString()
-  @IsNotEmpty()
   apelidoComprador: string;
 
   @IsString()

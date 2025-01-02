@@ -18,6 +18,7 @@ export class TransactionsService {
     }
     /* Validação de cadastro do Comprador */
     const allSellCounterparties = vendas.map((venda) => venda.apelidoComprador);
+    const allSellNames = vendas.map((venda) => venda.nomeComprador);
     const allSellExchanges = vendas.map((venda) => venda.exchangeUtilizada);
     const allDocumentos = vendas
       .map((venda) => ({
@@ -34,7 +35,7 @@ export class TransactionsService {
       const unregisteredDocumentos = allDocumentos.filter(
         ({ documento }) => !registeredDocumentos.includes(documento),
       );
-      console.log("1");
+
       if (unregisteredDocumentos.length > 0) {
         try {
           await this.buyerService.registerBuyers(unregisteredDocumentos);
@@ -48,31 +49,42 @@ export class TransactionsService {
     const allBuyCounterparties = compras.map((compra) => compra.apelidoVendedor);
     const allBuyExchanges = compras.map((compra) => compra.exchangeUtilizada);
 
-    const buyers = await this.buyerService.findByCounterpartyAndExchange(
-      allSellCounterparties,
+    const buyers = await this.buyerService.findByCounterpartyOrNameAndExchange(
       allSellExchanges,
+      allSellNames,
+      allSellCounterparties,
     );
 
     const registeredCounterpartyBuyer = buyers.map((buyer) => buyer.counterparty);
-    const unregisteredCounterpartyBuyerDetails = vendas
-      .map((venda) => ({
+    const registeredNameBuyer = buyers.map((buyer) => buyer.name);
+
+    const unregisteredCounterpartyAndNameBuyerDetails = vendas
+      .map((venda, index) => ({
         counterparty: venda.apelidoComprador,
+        name: venda.nomeComprador,
         order: venda.numeroOrdem, // Supondo que exista o campo `numeroOrdem`
         dataHoraTransacao: venda.dataHoraTransacao,
         exchange: venda.exchangeUtilizada,
       }))
-      .filter(({ counterparty }) => !registeredCounterpartyBuyer.includes(counterparty));
+      .filter(
+        ({ counterparty, name }) =>
+          !registeredCounterpartyBuyer.includes(counterparty) &&
+          !registeredNameBuyer.includes(name),
+      );
 
-    if (unregisteredCounterpartyBuyerDetails.length > 0) {
+    if (unregisteredCounterpartyAndNameBuyerDetails.length > 0) {
       // Formata a mensagem de erro com detalhes do comprador e suas respectivas ordens
-      const details = unregisteredCounterpartyBuyerDetails
+      const details = unregisteredCounterpartyAndNameBuyerDetails
         .map(
-          ({ counterparty, order, dataHoraTransacao, exchange }) =>
-            `Usuário: ${counterparty} | Ordem: ${order} | Data/Hora: ${dataHoraTransacao} | Exchange: ${exchange.split(" ")[0]}`,
+          ({ counterparty, name, order, dataHoraTransacao, exchange }) =>
+            `${!["", undefined].includes(counterparty) ? `Usuário: ${counterparty} | ` : ""}
+           ${!["", undefined].includes(name) ? `Nome: ${name} | ` : ""} 
+          Ordem: ${order} | Data / Hora: ${dataHoraTransacao} 
+           | Exchange: ${exchange.split(" ")[0]} `,
         )
         .join("\n");
 
-      throw new CustomError(`Preencha CPF e nome. Compradores não cadastrados:\n${details}`);
+      throw new CustomError(`Compradores não cadastrados: \n${details} `);
     }
 
     /* Validação e registro de novos vendedores */
@@ -101,13 +113,14 @@ export class TransactionsService {
     }
 
     /* Envio de dados para TXT */
-    const compradoresMapeados = await this.buyerService.findByCounterparty(allSellCounterparties);
+    const compradoresMapeados = await this.buyerService.findByCounterpartyOrName(
+      allSellCounterparties,
+      allSellNames,
+    );
     const vendedoresMapeados = await this.sellerService.findByCounterparty(allBuyCounterparties);
 
-    const vendasComNome = vendas.map((venda) => {
-      const comprador = compradoresMapeados.find(
-        (buyer) => buyer.counterparty === venda.apelidoComprador,
-      );
+    const vendasComNome = vendas.map((venda, index) => {
+      const comprador = compradoresMapeados[index];
       return {
         ...venda,
         id: comprador ? comprador.id : null,
@@ -115,6 +128,12 @@ export class TransactionsService {
         documentoComprador: comprador ? comprador.document : venda.documentoComprador,
       };
     });
+
+    if (vendasComNome.some((venda) => !venda.id)) {
+      throw new CustomError(
+        "Alguns compradores não foram encontrados ou estão na exchange errada.",
+      );
+    }
 
     const comprasComNome = compras.map((compra) => {
       const vendedor = vendedoresMapeados.find(
@@ -205,7 +224,7 @@ export class TransactionsService {
     // Verificar se as datas são válidas
     if (isNaN(start.getTime()) || isNaN(end.getTime()))
       throw new CustomError("Datas fornecidas são inválidas.");
-
+    console.log("aqui");
     const transactions = await prisma.order.findMany({
       where: {
         createdIn: {
