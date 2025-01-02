@@ -5,20 +5,95 @@ import { OperationDto } from "../compliance/dto/operations.dto";
 
 @Injectable()
 export class SellerService {
-  async findByCounterpartyAndExchange(counterparties: string[], exchanges: string[]) {
+  async findByCounterpartyOrNameAndExchange(
+    exchanges: string[],
+    names?: (string | undefined)[],
+    counterparties?: (string | undefined)[],
+  ) {
+    if (!names && !counterparties) {
+      throw new Error("Nem nomes nem contrapartes válidas foram fornecidas.");
+    }
+
+    // Prepara os dados para a consulta
+    const conditions = (names || []).map((name, index) => {
+      const counterparty = counterparties?.[index];
+      return {
+        OR: [...(name ? [{ name }] : []), ...(counterparty ? [{ counterparty }] : [])],
+        exchange: exchanges[index], // Inclui a exchange correspondente
+      };
+    });
+
     const sellers = await prisma.seller.findMany({
       where: {
-        counterparty: {
-          in: counterparties,
-        },
-        exchange: {
-          in: exchanges,
-        },
+        OR: conditions,
       },
       select: {
         counterparty: true,
+        exchange: true,
+        name: true,
       },
     });
+
+    // Cria conjuntos de validação para comparação
+    const foundNamesAndExchanges = new Set(
+      sellers.map((seller) => `${seller.name}|${seller.exchange}`),
+    );
+    const foundCounterpartiesAndExchanges = new Set(
+      sellers.map((seller) => `${seller.counterparty}|${seller.exchange}`),
+    );
+
+    // Verifica ausências
+    const missingDetails = conditions
+      .map(({ OR, exchange }, index) => {
+        const [nameCondition, counterpartyCondition] = OR || [];
+        const name = nameCondition?.name;
+        const counterparty = counterpartyCondition?.counterparty;
+        const exchangeKey = `${name || counterparty}|${exchange}`;
+        const isMissing =
+          (name && !foundNamesAndExchanges.has(exchangeKey)) ||
+          (counterparty && !foundCounterpartiesAndExchanges.has(exchangeKey));
+
+        if (isMissing) {
+          return {
+            index,
+            name,
+            counterparty,
+            exchange,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (missingDetails.length > 0) {
+      const errorDetails = missingDetails
+        .map(
+          ({ name, counterparty, exchange }) =>
+            `${name !== "" ? `Nome: ${name}` : ""}
+               ${counterparty !== undefined ? `, Contraparte: ${counterparty}` : ""},
+        Exchange: ${exchange} `,
+        )
+        .join("\n");
+
+      throw new CustomError(`Dados não encontrados: \n${errorDetails} `);
+    }
+    // Conta a ocorrência de cada nome no banco de dados
+    const nameCounts = sellers.reduce(
+      (acc, seller) => {
+        acc[seller.name] = (acc[seller.name] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    // Filtra os nomes duplicados (aparecem mais de uma vez)
+    const duplicateNames = Object.keys(nameCounts).filter((name) => nameCounts[name] > 1);
+
+    // Se houver nomes duplicados, lança um erro
+    if (duplicateNames.length > 0) {
+      const details = duplicateNames.join(", ");
+      throw new CustomError(`Nome duplicado: ${details}`);
+    }
 
     return sellers;
   }
@@ -59,6 +134,54 @@ export class SellerService {
     });
 
     return sellers;
+  }
+
+  async findByCounterpartyOrName(
+    counterparties: (string | undefined)[],
+    names: (string | undefined)[],
+  ) {
+    if (counterparties.length !== names.length) {
+      throw new CustomError("Os arrays 'counterparties' e 'names' devem ter o mesmo tamanho.");
+    }
+
+    const sellers = await prisma.seller.findMany({
+      where: {
+        OR: [
+          {
+            counterparty: {
+              in: counterparties.filter((cp) => cp && cp.trim() !== ""),
+            },
+          },
+          {
+            name: {
+              in: names.filter((name) => name && name.trim() !== ""),
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        counterparty: true,
+        exchange: true,
+      },
+    });
+
+    const results = counterparties.map((cp, index) => {
+      const name = names[index];
+      const foundSeller = sellers.find(
+        (seller) => (seller.counterparty === cp || seller.name === name) && seller.exchange,
+      );
+
+      if (!foundSeller) {
+        const missingInfo = cp ? `Counterparty '${cp}'` : `Name '${name}'`;
+        throw new CustomError(`${missingInfo} não foi encontrado ou está na exchange errada.`);
+      }
+
+      return foundSeller;
+    });
+
+    return results;
   }
 
   async findSeller(data: OperationDto) {

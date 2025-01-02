@@ -47,6 +47,7 @@ export class TransactionsService {
 
     /* Validação de cadastro do Vendedor */
     const allBuyCounterparties = compras.map((compra) => compra.apelidoVendedor);
+    const allBuyNames = compras.map((compra) => compra.nomeVendedor);
     const allBuyExchanges = compras.map((compra) => compra.exchangeUtilizada);
 
     const buyers = await this.buyerService.findByCounterpartyOrNameAndExchange(
@@ -88,28 +89,41 @@ export class TransactionsService {
     }
 
     /* Validação e registro de novos vendedores */
-    const sellers = await this.sellerService.findByCounterpartyAndExchange(
-      allBuyCounterparties,
+    const sellers = await this.sellerService.findByCounterpartyOrNameAndExchange(
       allBuyExchanges,
+      allBuyNames,
+      allBuyCounterparties,
     );
     const registeredCounterpartySeller = sellers.map((seller) => seller.counterparty);
-    const unregisteredCounterpartySeller = allBuyCounterparties
-      .filter((counterparty) => !registeredCounterpartySeller.includes(counterparty))
-      .map((counterparty) => {
-        const compra = compras.find((compra) => compra.apelidoVendedor === counterparty);
-        return {
-          nome: compra?.nomeVendedor ?? "",
-          apelido: counterparty,
-          exchange: compra?.exchangeUtilizada ?? "",
-        };
-      });
+    const registeredNameSeller = sellers.map((seller) => seller.name);
 
-    if (unregisteredCounterpartySeller.length > 0) {
-      try {
-        await this.sellerService.registerSellers(unregisteredCounterpartySeller);
-      } catch (error) {
-        throw new CustomError(`Erro ao cadastrar vendedor: ${error.message} `);
-      }
+    const unregisteredCounterpartyAndNameSellerDetails = compras
+      .map((compra, index) => ({
+        counterparty: compra.apelidoVendedor,
+        name: compra.nomeVendedor,
+        order: compra.numeroOrdem, // Supondo que exista o campo `numeroOrdem`
+        dataHoraTransacao: compra.dataHoraTransacao,
+        exchange: compra.exchangeUtilizada,
+      }))
+      .filter(
+        ({ counterparty, name }) =>
+          !registeredCounterpartySeller.includes(counterparty) &&
+          !registeredNameSeller.includes(name),
+      );
+
+    if (unregisteredCounterpartyAndNameSellerDetails.length > 0) {
+      // Formata a mensagem de erro com detalhes do comprador e suas respectivas ordens
+      const details = unregisteredCounterpartyAndNameSellerDetails
+        .map(
+          ({ counterparty, name, order, dataHoraTransacao, exchange }) =>
+            `${!["", undefined].includes(counterparty) ? `Usuário: ${counterparty} | ` : ""}
+           ${!["", undefined].includes(name) ? `Nome: ${name} | ` : ""} 
+          Ordem: ${order} | Data / Hora: ${dataHoraTransacao} 
+           | Exchange: ${exchange.split(" ")[0]} `,
+        )
+        .join("\n");
+
+      throw new CustomError(`Compradores não cadastrados: \n${details} `);
     }
 
     /* Envio de dados para TXT */
@@ -117,7 +131,10 @@ export class TransactionsService {
       allSellCounterparties,
       allSellNames,
     );
-    const vendedoresMapeados = await this.sellerService.findByCounterparty(allBuyCounterparties);
+    const vendedoresMapeados = await this.sellerService.findByCounterpartyOrName(
+      allBuyCounterparties,
+      allSellNames,
+    );
 
     const vendasComNome = vendas.map((venda, index) => {
       const comprador = compradoresMapeados[index];
@@ -135,10 +152,8 @@ export class TransactionsService {
       );
     }
 
-    const comprasComNome = compras.map((compra) => {
-      const vendedor = vendedoresMapeados.find(
-        (seller) => seller.counterparty === compra.apelidoVendedor,
-      );
+    const comprasComNome = compras.map((compra, index) => {
+      const vendedor = vendedoresMapeados[index];
       return {
         ...compra,
         id: vendedor ? vendedor.id : null,
