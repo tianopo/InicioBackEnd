@@ -12,7 +12,6 @@ export class ComplianceService {
     private readonly buyerService: BuyerService,
     private readonly sellerService: SellerService,
   ) {}
-
   async apiPortalDaTransparencia(documento: string) {
     // https://api.portaldatransparencia.gov.br/swagger-ui/index.html#/
     const apiPortalDaTransparencia = "https://api.portaldatransparencia.gov.br/";
@@ -143,31 +142,30 @@ export class ComplianceService {
 
   async usersRegister(data: OperationDto) {
     const { documento, nome, apelido, exchange } = data;
+    if (!apelido) throw new CustomError("Precisa de um apelido para cadastro");
+
     const findBuyerByCounterparty = await this.buyerService.checkCounterpartyExists(
       apelido,
       exchange,
     );
-    if (findBuyerByCounterparty) throw new CustomError(`o comprador ${apelido} está cadastrado`);
+    if (findBuyerByCounterparty)
+      return this.validate({ documento: findBuyerByCounterparty.document });
 
     const findSellerBycounterparty = await this.sellerService.checkCounterpartyExists(
       apelido,
       exchange,
     );
     if (findSellerBycounterparty) throw new CustomError(`o vendedor ${apelido} está cadastrado`);
-    if (!apelido) throw new CustomError("Precisa de um apelido para cadastro");
 
+    if (!nome) throw new CustomError(`${apelido} precisa de um nome para cadastro`);
     if (documento) {
-      const buyerExists = await this.buyerService.checkDocumentExists(documento);
-      if (buyerExists)
-        throw new CustomError(`O CPF/CNPJ ${documento} do comprador está cadastrado`);
       await this.buyerService.registerBuyers([{ documento, nome, apelido, exchange }]);
+      return this.validate({ documento });
     } else {
-      const sellerExists = await this.sellerService.findSeller(data);
-      if (sellerExists) throw new CustomError(`O vendedor ${apelido} está cadastrado`);
       await this.sellerService.registerSellers([{ nome, apelido, exchange }]);
-    }
 
-    return true;
+      return true;
+    }
   }
 
   async usersUpdate(data: OperationDto) {
