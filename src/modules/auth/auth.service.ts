@@ -61,7 +61,6 @@ export class AuthService {
   }
 
   async logout(token: string) {
-    console.log(token, "oi");
     const user = await this.userService.findToken(token);
 
     if (user)

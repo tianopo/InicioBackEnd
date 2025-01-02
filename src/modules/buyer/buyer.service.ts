@@ -164,9 +164,10 @@ export class BuyerService {
     names: (string | undefined)[],
   ) {
     if (counterparties.length !== names.length) {
-      throw new CustomError("Os arrays 'counterparties' e 'names' devem ter o mesmo tamanho.");
+      throw new CustomError(
+        "Os arrays dos compradores 'counterparties' e 'names' devem ter o mesmo tamanho.",
+      );
     }
-
     const buyers = await prisma.buyer.findMany({
       where: {
         OR: [

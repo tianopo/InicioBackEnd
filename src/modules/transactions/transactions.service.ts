@@ -133,7 +133,7 @@ export class TransactionsService {
     );
     const vendedoresMapeados = await this.sellerService.findByCounterpartyOrName(
       allBuyCounterparties,
-      allSellNames,
+      allBuyNames,
     );
 
     const vendasComNome = vendas.map((venda, index) => {
@@ -161,6 +161,10 @@ export class TransactionsService {
       };
     });
 
+    if (comprasComNome.some((venda) => !venda.id)) {
+      throw new CustomError("Alguns vendedores não foram encontrados ou estão na exchange errada.");
+    }
+    console.log(vendasComNome, comprasComNome);
     // Registro das ordens de compra e venda no banco de dados
     await prisma.$transaction(async (prisma) => {
       for (const venda of vendasComNome) {
@@ -239,7 +243,6 @@ export class TransactionsService {
     // Verificar se as datas são válidas
     if (isNaN(start.getTime()) || isNaN(end.getTime()))
       throw new CustomError("Datas fornecidas são inválidas.");
-    console.log("aqui");
     const transactions = await prisma.order.findMany({
       where: {
         createdIn: {
